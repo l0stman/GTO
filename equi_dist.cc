@@ -1,0 +1,215 @@
+#include "equi_dist.h"
+
+#include <cstdio>
+#include <cstdlib>
+#include <vector>
+
+#include <pokerstove/peval/Card.h>
+#include <pokerstove/peval/PokerHandEvaluator.h>
+
+namespace {
+using std::string;
+using pokerstove::CardSet;
+using pokerstove::Card;
+
+const string kRanks = "23456789TJQKA";
+const string kSuits = "cdhs";
+
+inline int
+RandInt(int n)
+{
+        return static_cast<int>(static_cast<double>(rand())/RAND_MAX*n);
+}
+
+inline char
+RandElt(const string& s)
+{
+        return s[RandInt(s.length())];
+}
+
+void
+ExpandBoard(const CardSet& init_board,
+            const CardSet& dead_cards,
+            CardSet& final_board)
+{
+        CardSet dc(dead_cards);
+        string s(2, 'x');
+        Card c;
+
+        final_board.clear();
+        final_board.insert(init_board);
+        for (int i = init_board.size(); i < 5; i++) {
+                do {
+                        s[0] = RandElt(kRanks);
+                        s[1] = RandElt(kSuits);
+                        c = Card(s);
+                } while (dc.contains(c));
+                dc.insert(c);
+                final_board.insert(c);
+        }
+}
+
+void
+CheckRangesOrDie(const GTO::Range& h,
+                 const GTO::Range& v,
+                 const CardSet& b)
+{
+        bool ok = false;
+        for (auto hit = h.begin(); !ok && hit != h.end(); hit++)
+                if (hit->disjoint(b))
+                        for (auto vit = v.begin(); vit != v.end(); vit++)
+                                if (vit->disjoint(b) && vit->disjoint(*hit)) {
+                                        ok = true;
+                                        break;
+                                }
+        if (!ok) {
+                fprintf(stderr, "The ranges and board conflict.\n\
+Hero\t: %s\nVillain\t: %s\nBoard\t: %s\n", h.str().c_str(), v.str().c_str(),
+                        b.str().c_str());
+                exit(1);
+        }
+}
+}
+
+namespace GTO {
+using std::vector;
+using pokerstove::PokerHandEvaluator;
+
+EquiDist::EquiDist(const Range& hero, const Range& villain)
+{
+        EquiDist(hero, villain, CardSet());
+}
+
+EquiDist::EquiDist(const Range& hero,
+                   const Range& villain,
+                   const CardSet& init_board)
+{
+        size_t hsiz = hero.size();
+        size_t vsiz = villain.size();
+        vector<CardSet> hands(hsiz+vsiz);
+        vector<double> shares(hsiz+vsiz, 0);
+        vector<size_t> total(hsiz+vsiz, 0);
+        vector<double> equity(hsiz+vsiz, -1);
+        CSPairTable pshares;
+        CSPairTable ptotal;
+        boost::shared_ptr<PokerHandEvaluator> E(PokerHandEvaluator::alloc("h"));
+        pokerstove::PokerEvaluation he, ve;
+        CardSet board, dead_cards;
+        bool stop = false;
+        size_t nrounds = 0;
+
+        CheckRangesOrDie(hero, villain, init_board);
+        hands.assign(hero.begin(), hero.end());
+        auto it = villain.begin();
+        for (size_t i = 0; i < vsiz; i++)
+                hands[hsiz+i] = *it++;
+
+        srand(time(0));
+        while (!stop) {
+                nrounds++;
+                for (size_t i = 0; i < nsamples_; i++) {
+                        int h, v;
+                        dead_cards.clear();
+                        dead_cards.insert(init_board);
+                        do {
+                                h = RandInt(hsiz);
+                                v = hsiz + RandInt(vsiz);
+                        } while (dead_cards.intersects(hands[h]) ||
+                                 dead_cards.intersects(hands[v]) ||
+                                 hands[h].intersects(hands[v]));
+                        total[h]++;
+                        total[v]++;
+                        dead_cards.insert(hands[h]);
+                        dead_cards.insert(hands[v]);
+                        ExpandBoard(init_board, dead_cards, board);
+                        he = E->evaluateHand(hands[h], board).high();
+                        ve = E->evaluateHand(hands[v], board).high();
+                        Inc(hands[h], hands[v], ptotal, 1);
+                        if (he == ve) {
+                                shares[h] += 0.5;
+                                shares[v] += 0.5;
+                                Inc(hands[h], hands[v], pshares, 0.5);
+                        } else if (he > ve) {
+                                shares[h]++;
+                                if (CSCmp(hands[h], hands[v]))
+                                        Inc(hands[h], hands[v], pshares, 1);
+                        } else {
+                                shares[v]++;
+                                if (CSCmp(hands[v], hands[h]))
+                                        Inc(hands[h], hands[v], pshares, 1);
+                        }
+                }
+                if (nrounds < minrounds_)
+                        continue;
+                double err = 0.0;
+                for (size_t i = 0; i < shares.size(); i++) {
+                        if (equity[i] >= 0) {
+                                double d = equity[i]-shares[i]/total[i];
+                                err += d*d;
+                        } else if (total[i] > 0)
+                                goto update;
+                }
+                if (err < threshold_)
+                        stop = true;
+        update:
+                for (size_t i = 0; i < shares.size(); i++)
+                        if (total[i] > 0)
+                                equity[i] = shares[i]/total[i];
+        }
+        hrange_equity_ = 0;
+        size_t htotal = 0;
+        for (size_t i = 0; i < hsiz; i++)
+                if (total[i] > 0) {
+                        hrange_equity_ += shares[i];
+                        htotal += total[i];
+                        hero_equity_[hands[i]] = equity[i];
+                }
+        hrange_equity_ /= htotal;
+        for (size_t i = hsiz; i < vsiz+hsiz; i++)
+                if (total[i] > 0)
+                        vill_equity_[hands[i]] = equity[i];
+        for (auto it = ptotal.begin(); it != ptotal.end(); it++)
+                equity_[it->first] = pshares.count(it->first) > 0 ?
+                        pshares[it->first]/it->second : 0;
+}
+
+double
+EquiDist::HeroEquity()
+{
+        return hrange_equity_;
+}
+
+double
+EquiDist::VillEquity()
+{
+        return 1-hrange_equity_;
+}
+
+double
+EquiDist::HeroEquity(const CardSet& hand)
+{
+        return hero_equity_.count(hand) > 0 ? hero_equity_[hand] : -1;
+}
+
+double
+EquiDist::VillEquity(const CardSet& hand)
+{
+        return vill_equity_.count(hand) > 0 ? vill_equity_[hand] : -1;
+}
+
+double
+EquiDist::Equity(const CardSet& hand1, const CardSet& hand2)
+{
+        std::pair<CardSet, CardSet> p;
+        if (CSCmp(hand1, hand2)) {
+                p.first = hand1;
+                p.second = hand2;
+        } else {
+                p.first = hand2;
+                p.second = hand1;
+        }
+        if (equity_.count(p) == 0)
+                return -1;
+        return CSCmp(hand1, hand2) ? equity_[p] : 1-equity_[p];
+}
+}
