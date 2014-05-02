@@ -69,6 +69,20 @@ Hero\t: %s\nVillain\t: %s\nBoard\t: %s\n", h.str().c_str(), v.str().c_str(),
                 exit(1);
         }
 }
+
+size_t
+AddRange(const GTO::Range& r,
+         const CardSet& board,
+         std::vector<CardSet>& hands)
+{
+        size_t size = 0;
+        for (auto it = r.begin(); it != r.end(); it++)
+                if (board.disjoint(*it)) {
+                        size++;
+                        hands.push_back(*it);
+                }
+        return size;
+}
 }
 
 namespace GTO {
@@ -84,9 +98,10 @@ EquiDist::EquiDist(const Range& hero,
                    const Range& villain,
                    const CardSet& init_board)
 {
-        size_t hsiz = hero.size();
-        size_t vsiz = villain.size();
-        vector<CardSet> hands(hsiz+vsiz);
+        CheckRangesOrDie(hero, villain, init_board);
+        vector<CardSet> hands;
+        size_t hsiz = AddRange(hero, init_board, hands);
+        size_t vsiz = AddRange(villain, init_board, hands);
         vector<double> shares(hsiz+vsiz, 0);
         vector<size_t> total(hsiz+vsiz, 0);
         vector<double> equity(hsiz+vsiz, -1);
@@ -95,12 +110,6 @@ EquiDist::EquiDist(const Range& hero,
         CardSet board, dead_cards;
         bool stop = false;
         size_t nrounds = 0;
-
-        CheckRangesOrDie(hero, villain, init_board);
-        hands.assign(hero.begin(), hero.end());
-        auto it = villain.begin();
-        for (size_t i = 0; i < vsiz; i++)
-                hands[hsiz+i] = *it++;
 
         srand(time(0));
         while (!stop) {
