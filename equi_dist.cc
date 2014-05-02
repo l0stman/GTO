@@ -50,24 +50,17 @@ ExpandBoard(const CardSet& init_board,
 }
 
 void
-CheckRangesOrDie(const GTO::Range& h,
-                 const GTO::Range& v,
-                 const CardSet& b)
+CheckRangesOrDie(const std::vector<CardSet>& hands, const size_t& hsiz)
 {
-        bool ok = false;
-        for (auto hit = h.begin(); !ok && hit != h.end(); hit++)
-                if (hit->disjoint(b))
-                        for (auto vit = v.begin(); vit != v.end(); vit++)
-                                if (vit->disjoint(b) && vit->disjoint(*hit)) {
-                                        ok = true;
-                                        break;
-                                }
-        if (!ok) {
-                fprintf(stderr, "The ranges and board conflict.\n\
-Hero\t: %s\nVillain\t: %s\nBoard\t: %s\n", h.str().c_str(), v.str().c_str(),
-                        b.str().c_str());
-                exit(1);
-        }
+        for (size_t i = 0; i < hsiz; i++)
+                for (size_t j = hsiz; j < hands.size(); j++)
+                        if (hands[i].disjoint(hands[j]))
+                                return;
+        fprintf(stderr, "The ranges aren't compatible with each other.\n\
+Hero\t: %s\nVillain\t: %s\n",
+                GTO::Range(hands, 0, hsiz).str().c_str(),
+                GTO::Range(hands, hsiz, hands.size()).str().c_str());
+        exit(1);
 }
 
 size_t
@@ -98,7 +91,6 @@ EquiDist::EquiDist(const Range& hero,
                    const Range& villain,
                    const CardSet& init_board)
 {
-        CheckRangesOrDie(hero, villain, init_board);
         vector<CardSet> hands;
         size_t hsiz = AddRange(hero, init_board, hands);
         size_t vsiz = AddRange(villain, init_board, hands);
@@ -111,6 +103,7 @@ EquiDist::EquiDist(const Range& hero,
         bool stop = false;
         size_t nrounds = 0;
 
+        CheckRangesOrDie(hands, hsiz);
         srand(time(0));
         while (!stop) {
                 nrounds++;
