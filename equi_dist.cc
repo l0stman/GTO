@@ -109,16 +109,14 @@ EquiDist::EquiDist(const Range& hero,
                 nrounds++;
                 for (size_t i = 0; i < nsamples_; i++) {
                         int h, v;
-                        dead_cards.clear();
-                        dead_cards.insert(init_board);
                         do {
                                 h = RandInt(hsiz);
                                 v = hsiz + RandInt(vsiz);
-                        } while (dead_cards.intersects(hands[h]) ||
-                                 dead_cards.intersects(hands[v]) ||
-                                 hands[h].intersects(hands[v]));
+                        } while (hands[h].intersects(hands[v]));
                         total[h]++;
                         total[v]++;
+                        dead_cards.clear();
+                        dead_cards.insert(init_board);
                         dead_cards.insert(hands[h]);
                         dead_cards.insert(hands[v]);
                         ExpandBoard(init_board, dead_cards, board);
@@ -159,7 +157,7 @@ EquiDist::EquiDist(const Range& hero,
                         hero_equity_[hands[i]] = equity[i];
                 }
         hrange_equity_ /= htotal;
-        for (size_t i = hsiz; i < vsiz+hsiz; i++)
+        for (size_t i = hsiz; i < hands.size(); i++)
                 if (total[i] > 0)
                         vill_equity_[hands[i]] = equity[i];
 }
