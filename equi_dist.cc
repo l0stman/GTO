@@ -94,9 +94,9 @@ EquiDist::EquiDist(const Range& hero,
         vector<CardSet> hands;
         size_t hsiz = AddRange(hero, init_board, hands);
         size_t vsiz = AddRange(villain, init_board, hands);
-        vector<double> shares(hsiz+vsiz, 0);
-        vector<size_t> total(hsiz+vsiz, 0);
-        vector<double> equity(hsiz+vsiz, -1);
+        vector<double> shares(hands.size(), 0);
+        vector<size_t> total(hands.size(), 0);
+        vector<double> equity(hands.size(), -1);
         boost::shared_ptr<PokerHandEvaluator> E(PokerHandEvaluator::alloc("h"));
         pokerstove::PokerEvaluation he, ve;
         CardSet board, dead_cards;
