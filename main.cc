@@ -27,14 +27,5 @@ main(int argc, char *argv[])
         }
         fprintf(stderr, "Hero: %.3f, Villain: %.3f\n", eq.HeroEquity(),
                 eq.VillEquity());
-        for (auto hit = hero.begin(); hit != hero.end(); hit++)
-                for (auto vit = villain.begin(); vit != villain.end(); vit++) {
-                        double e = eq.Equity(*hit, *vit);
-                        if (e > 0)
-                                fprintf(stderr, "%s vs %s: %.3f\n",
-                                        hit->str().c_str(),
-                                        vit->str().c_str(),
-                                        e);
-                }
         return 0;
 }

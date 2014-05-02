@@ -90,8 +90,6 @@ EquiDist::EquiDist(const Range& hero,
         vector<double> shares(hsiz+vsiz, 0);
         vector<size_t> total(hsiz+vsiz, 0);
         vector<double> equity(hsiz+vsiz, -1);
-        CSPairTable pshares;
-        CSPairTable ptotal;
         boost::shared_ptr<PokerHandEvaluator> E(PokerHandEvaluator::alloc("h"));
         pokerstove::PokerEvaluation he, ve;
         CardSet board, dead_cards;
@@ -124,20 +122,14 @@ EquiDist::EquiDist(const Range& hero,
                         ExpandBoard(init_board, dead_cards, board);
                         he = E->evaluateHand(hands[h], board).high();
                         ve = E->evaluateHand(hands[v], board).high();
-                        Inc(hands[h], hands[v], ptotal, 1);
                         if (he == ve) {
                                 shares[h] += 0.5;
                                 shares[v] += 0.5;
-                                Inc(hands[h], hands[v], pshares, 0.5);
-                        } else if (he > ve) {
+                        } else if (he > ve)
                                 shares[h]++;
-                                if (CSCmp(hands[h], hands[v]))
-                                        Inc(hands[h], hands[v], pshares, 1);
-                        } else {
+                        else
                                 shares[v]++;
-                                if (CSCmp(hands[v], hands[h]))
-                                        Inc(hands[h], hands[v], pshares, 1);
-                        }
+
                 }
                 if (nrounds < minrounds_)
                         continue;
@@ -168,9 +160,6 @@ EquiDist::EquiDist(const Range& hero,
         for (size_t i = hsiz; i < vsiz+hsiz; i++)
                 if (total[i] > 0)
                         vill_equity_[hands[i]] = equity[i];
-        for (auto it = ptotal.begin(); it != ptotal.end(); it++)
-                equity_[it->first] = pshares.count(it->first) > 0 ?
-                        pshares[it->first]/it->second : 0;
 }
 
 double
@@ -195,21 +184,5 @@ double
 EquiDist::VillEquity(const CardSet& hand)
 {
         return vill_equity_.count(hand) > 0 ? vill_equity_[hand] : -1;
-}
-
-double
-EquiDist::Equity(const CardSet& hand1, const CardSet& hand2)
-{
-        std::pair<CardSet, CardSet> p;
-        if (CSCmp(hand1, hand2)) {
-                p.first = hand1;
-                p.second = hand2;
-        } else {
-                p.first = hand2;
-                p.second = hand1;
-        }
-        if (equity_.count(p) == 0)
-                return -1;
-        return CSCmp(hand1, hand2) ? equity_[p] : 1-equity_[p];
 }
 }
