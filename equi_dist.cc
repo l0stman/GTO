@@ -82,11 +82,6 @@ namespace GTO {
 using std::vector;
 using pokerstove::PokerHandEvaluator;
 
-EquiDist::EquiDist(const Range& hero, const Range& villain)
-{
-        EquiDist(hero, villain, CardSet());
-}
-
 EquiDist::EquiDist(const Range& hero,
                    const Range& villain,
                    const CardSet& init_board)

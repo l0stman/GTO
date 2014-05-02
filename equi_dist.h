@@ -10,10 +10,9 @@ namespace GTO {
 
 class EquiDist {
 public:
-        explicit EquiDist(const Range& hero, const Range& villain);
         explicit EquiDist(const Range& hero,
                           const Range& villain,
-                          const CardSet& board);
+                          const CardSet& board=CardSet());
         // Return the equity of the range for hero or villain.
         virtual double HeroEquity();
         virtual double VillEquity();
