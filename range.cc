@@ -111,6 +111,31 @@ Range::Remove(const CardSet& hand)
         range_.erase(hand);
 }
 
+void
+Range::Fill()
+{
+        string c1(2, 'x');
+        string c2(2, 'x');
+
+        for (size_t r1 = 0; r1 < kRanks_.length(); r1++)
+                for (size_t s1 = 0; s1 < kSuits_.length(); s1++) {
+                        c1[0] = kRanks_[r1];
+                        c1[1] = kSuits_[s1];
+                        for (size_t r2 = 0; r2 < kRanks_.length(); r2++)
+                                for (size_t s2 = 0; s2<kSuits_.length(); s2++) {
+                                        CardSet hand(c1);
+                                        c2[0] = kRanks_[r2];
+                                        c2[1] = kSuits_[s2];
+                                        CardSet C(c2);
+
+                                        if (hand.disjoint(C)) {
+                                                hand.insert(C);
+                                                Add(hand);
+                                         }
+                                }
+                }
+}
+
 string
 Range::str() const
 {

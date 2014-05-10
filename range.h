@@ -16,6 +16,7 @@ using std::string;
 
 class Range {
 public:
+        Range() {};
         explicit Range(const string& s);
         // Build a range from the hands between [min, max).
         explicit Range(const std::vector<CardSet>& hands,
@@ -24,6 +25,7 @@ public:
         virtual bool IsMember(const CardSet& hand) const;
         virtual void Add(const CardSet& hand);
         virtual void Remove(const CardSet& hand);
+        virtual void Fill();
 
         string str() const;
         size_t size() const { return range_.size();};
