@@ -38,6 +38,8 @@ Range::AddSuited(const string& s, const size_t& pos)
         h[0] = s[pos];
         h[2] = s[pos+1];
 
+        if (s[pos] == s[pos+1])
+                FmtError(s.substr(pos, 3));
         for (size_t i = 0; i < kSuits_.length(); i++) {
                 h[1] = kSuits_[i];
                 h[3] = kSuits_[i];
