@@ -1,4 +1,5 @@
 #include "range.h"
+#include "equi_dist.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -42,28 +43,19 @@ AddRange(const Range& r, const CardSet& board, vector<CardSet>& hands)
 void
 ComputeEquity(const vector<CardSet>& hands,
               const size_t& hsiz,
+              const Range& hero,
+              const Range& vill,
               const CardSet& board,
               vector<double>& equity)
 {
+        GTO::EquiDist eq(hero, vill, board);
         size_t vsiz = hands.size()-hsiz;
-        boost::shared_ptr<PokerHandEvaluator> E(PokerHandEvaluator::alloc("h"));
-        pokerstove::PokerEvaluation he, ve;
 
         for (size_t i = 0; i < hsiz; i++)
-                for (size_t j = 0; j < vsiz; j++)
-                        if (hands[hsiz+j].disjoint(hands[i])) {
-                                size_t idx = i*vsiz+j;
-                                he = E->evaluateHand(
-                                        hands[i], board).high();
-                                ve = E->evaluateHand(
-                                        hands[hsiz+j], board).high();
-                                if (he == ve)
-                                        equity[idx] = 0.5;
-                                else if (he > ve)
-                                        equity[idx] = 1;
-                                else
-                                        equity[idx] = 0;
-                        }
+                for (size_t j = 0; j < vsiz; j++) {
+                        size_t idx = i*vsiz+j;
+                        equity[idx] = eq.Equity(hands[i], hands[hsiz+j]);
+                }
 }
 
 // Return the EV for hero when he bets a hand.
@@ -201,8 +193,22 @@ main(int argc, char *argv[])
         const double pot = 53;
         const double stack = 48.5;
 
+        Range h("JJ,QQ,KK,AA,AK,AQ");
+        Range v("A2s,A3s,A4s,A5s,56s,32s,46s");
+        CardSet b("As2d3d");
+        GTO::EquiDist ed(h, v, b);
+        for (auto hit = h.begin(); hit != h.end(); ++hit)
+                for (auto vit = v.begin(); vit != v.end(); ++vit) {
+                        double e = ed.Equity(*hit, *vit);
+                        if (e >= 0)
+                                fprintf(stderr, "%s vs %s: %.5f\n",
+                                        hit->str().c_str(),
+                                        vit->str().c_str(),
+                                        e);
+                }
+        exit(0);
         fprintf(stderr, "Hero: %d hands, Villain: %d hands.\n", hsiz, vsiz);
-        ComputeEquity(hands, hsiz, board, equity);
+        ComputeEquity(hands, hsiz, hero, vill, board, equity);
 
         srand(time(0));
         RandInit(bet_prob);
