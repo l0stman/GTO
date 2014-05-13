@@ -28,6 +28,18 @@ GetRank(const char& c)
         }
         return r;
 }
+
+inline void
+ParseRanks(const string& s,
+           const size_t& pos,
+           size_t& min,
+           size_t& max)
+{
+        size_t r1 = GetRank(s[pos]);
+        size_t r2 = GetRank(s[pos+1]);
+        min = r1 < r2 ? r1 : r2;
+        max = r1 < r2 ? r2 : r1;
+}
 }
 
 namespace GTO {
@@ -67,19 +79,39 @@ void
 Range::AddSuitedPlus(const string& s, const size_t& pos)
 {
         string h(4, 'x');
-        size_t r1 = GetRank(s[pos]);
-        size_t r2 = GetRank(s[pos+1]);
-        size_t min = r1 < r2 ? r1 : r2;
-        size_t max = r1 < r2 ? r2 : r1;
+        size_t min = 0;
+        size_t max = 0;
 
+        ParseRanks(s, pos, min, max);
         h[0] = kRanks_[max];
-        for (r1 = min; r1 < max; ++r1) {
-                h[2] = kRanks_[r1];
-                for (r2 = 0; r2 < kSuits_.length(); ++r2) {
-                        h[1] = kSuits_[r2];
-                        h[3] = kSuits_[r2];
+        for (size_t i = min; i < max; ++i) {
+                h[2] = kRanks_[i];
+                for (size_t j = 0; j < kSuits_.length(); ++j) {
+                        h[1] = kSuits_[j];
+                        h[3] = kSuits_[j];
                         range_.insert(CardSet(h));
                 }
+        }
+}
+
+void
+Range::AddOffsuitPlus(const string& s, const size_t& pos)
+{
+        string h(4, 'x');
+        size_t min = 0;
+        size_t max = 0;
+
+        ParseRanks(s, pos, min, max);
+        h[0] = kRanks_[max];
+        for (size_t i = min; i < max; ++i) {
+                h[2] = kRanks_[i];
+                for (size_t j = 0; j < kSuits_.length(); ++j)
+                        for (size_t k = 0; k < kSuits_.length(); ++k)
+                                if (j != k) {
+                                        h[1] = kSuits_[j];
+                                        h[3] = kSuits_[k];
+                                        range_.insert(CardSet(h));
+                                }
         }
 }
 
@@ -116,6 +148,8 @@ Range::Range(const string& in)
                         case 4:
                                 if (s[first+2] == 's' && s[first+3] == '+')
                                         AddSuitedPlus(s, first);
+                                else if (s[first+2] == 'o' && s[first+3] == '+')
+                                        AddOffsuitPlus(s, first);
                                 else
                                         range_.insert(
                                                 CardSet(s.substr(first, len)));
