@@ -13,22 +13,35 @@ public:
         explicit EquiDist(const Range& hero,
                           const Range& villain,
                           const CardSet& board=CardSet());
-        // Return the equity of the range for hero or villain.
-        virtual double HeroEquity();
-        virtual double VillEquity();
 
-        // Return the equity of the hand or -1 if it doesn't exist.
-        virtual double HeroEquity(const CardSet& hand);
-        virtual double VillEquity(const CardSet& hand);
+        // Return the equity of hero's hand against villain's or -1 if
+        // it doesn't exit.
+        virtual double Equity(const CardSet& hero, const CardSet& villain);
 private:
-        static const size_t minrounds_ = 1000;
-        static const size_t nsamples_ = 1000;
-        static constexpr double threshold_ = 0.00000001;
-        double hrange_equity_;
+        void InitRiver(const Range& hero,
+                       const Range& villain,
+                       const CardSet& board);
+        struct CSPairHash {
+                // Use the function hash_combine from boost
+                void
+                hash_combine(const CardSet& c, size_t& seed) const
+                {
+                        seed ^= Range::CSHash()(c) + 0x9e3779b9 + (seed << 6) +
+                                (seed >> 2);
+                }
+                size_t
+                operator()(const std::pair<CardSet, CardSet>& p) const
+                {
+                        size_t seed = 0;
+                        hash_combine(p.first, seed);
+                        hash_combine(p.second, seed);
+                        return seed;
+                }
+        };
 
-        typedef std::unordered_map<CardSet, double, Range::CSHash> CSTable;
-        CSTable hero_equity_;
-        CSTable vill_equity_;
+        typedef std::unordered_map<std::pair<CardSet, CardSet>, double,
+                                   CSPairHash> EQTable;
+        EQTable equity_;
 };
 }
 
