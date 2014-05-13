@@ -138,6 +138,31 @@ Range::AddSuitedRange(const string& s, const size_t& pos)
         }
 }
 
+void
+Range::AddOffsuitRange(const string& s, const size_t& pos)
+{
+        string h(4, 'x');
+        size_t min1, min2, max1, max2;
+
+        ParseRanks(s, pos, min1, max1);
+        ParseRanks(s, pos+4, min2, max2);
+        if (max1 != max2)
+                FmtError(s.substr(pos, 7));
+        h[0] = kRanks_[max1];
+        max1 = std::min(min1, min2);
+        max2 = std::max(min1, min2);
+        for (size_t i = max1; i<=max2; ++i) {
+                h[2] = kRanks_[i];
+                for (size_t j = 0; j < kSuits_.length(); ++j)
+                        for (size_t k = 0; k < kSuits_.length(); ++k)
+                                if (j != k) {
+                                        h[1] = kSuits_[j];
+                                        h[3] = kSuits_[k];
+                                        range_.insert(CardSet(h));
+                                }
+        }
+}
+
 Range::Range(const string& in)
 {
         string s(in);
@@ -181,6 +206,10 @@ Range::Range(const string& in)
                                 if (s[first+2] == 's' && s[first+3] == '-' &&
                                     s[first+6] == 's')
                                         AddSuitedRange(s, first);
+                                else if (s[first+2] == 'o' &&
+                                         s[first+3] == '-' &&
+                                         s[first+6] == 'o')
+                                        AddOffsuitRange(s, first);
                                 else
                                         FmtError(s.substr(first, len));
                                 break;
