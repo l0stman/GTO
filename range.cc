@@ -202,6 +202,24 @@ Range::AddSingleSuitRange(const string& s, const size_t& pos)
         }
 }
 
+void
+Range::AddSingleSuitPlus(const string& s, const size_t& pos)
+{
+        string h(4, 'x');
+        size_t r1 = GetRank(s[pos]);
+        size_t r2 = GetRank(s[pos+2]);
+        size_t min = std::min(r1, r2);
+        size_t max = std::max(r1, r2);
+
+        h[0] = kRanks_[max];
+        h[1] = s[1];
+        h[3] = s[3];
+        for (size_t i = min; i < max; ++i) {
+                h[2] = kRanks_[i];
+                range_.insert(h);
+        }
+}
+
 Range::Range(const string& in)
 {
         string s(in);
@@ -247,7 +265,14 @@ Range::Range(const string& in)
                                     s[first+2] == '-' &&
                                     s[first+3] == s[first+4])
                                         AddPocketsRange(s, first);
-                                else
+                                else if (s[first+4] == '+') {
+                                        c = s[first+1];
+                                        if ((c != 'c' && c != 's' &&
+                                             c != 'd' && c != 'h') ||
+                                            (c != s[first+3]))
+                                                FmtError(s.substr(first, len));
+                                        AddSingleSuitPlus(s, first);
+                                } else
                                         FmtError(s.substr(first, len));
                                 break;
                         case 7:

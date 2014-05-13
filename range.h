@@ -61,9 +61,10 @@ private:
         void AddSuitedPlus(const string& s, const size_t& pos);
         void AddOffsuitPlus(const string& s, const size_t& pos);
         void AddSuitedRange(const string& s, const size_t& pos);
-        void AddSingleSuitRange(const string& s, const size_t& pos);
         void AddOffsuitRange(const string& s, const size_t& pos);
         void AddPocketsRange(const string& s, const size_t& pos);
+        void AddSingleSuitRange(const string& s, const size_t& pos);
+        void AddSingleSuitPlus(const string& s, const size_t& pos);
         unordered_set<CardSet, CSHash> range_;
 };
 }
