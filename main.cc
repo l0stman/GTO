@@ -193,20 +193,6 @@ main(int argc, char *argv[])
         const double pot = 53;
         const double stack = 48.5;
 
-        Range h("JJ,QQ,KK,AA,AK,AQ");
-        Range v("A2s,A3s,A4s,A5s,56s,32s,46s");
-        CardSet b("As2d3d");
-        GTO::EquiDist ed(h, v, b);
-        for (auto hit = h.begin(); hit != h.end(); ++hit)
-                for (auto vit = v.begin(); vit != v.end(); ++vit) {
-                        double e = ed.Equity(*hit, *vit);
-                        if (e >= 0)
-                                fprintf(stderr, "%s vs %s: %.5f\n",
-                                        hit->str().c_str(),
-                                        vit->str().c_str(),
-                                        e);
-                }
-        exit(0);
         fprintf(stderr, "Hero: %d hands, Villain: %d hands.\n", hsiz, vsiz);
         ComputeEquity(hands, hsiz, hero, vill, board, equity);
 
