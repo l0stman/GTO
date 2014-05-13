@@ -212,8 +212,8 @@ Range::AddSingleSuitPlus(const string& s, const size_t& pos)
         size_t max = std::max(r1, r2);
 
         h[0] = kRanks_[max];
-        h[1] = s[1];
-        h[3] = s[3];
+        h[1] = s[pos+1];
+        h[3] = s[pos+1];
         for (size_t i = min; i < max; ++i) {
                 h[2] = kRanks_[i];
                 range_.insert(h);
