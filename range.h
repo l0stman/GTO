@@ -62,6 +62,7 @@ private:
         void AddOffsuitPlus(const string& s, const size_t& pos);
         void AddSuitedRange(const string& s, const size_t& pos);
         void AddOffsuitRange(const string& s, const size_t& pos);
+        void AddPocketsRange(const string& s, const size_t& pos);
         unordered_set<CardSet, CSHash> range_;
 };
 }

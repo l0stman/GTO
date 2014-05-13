@@ -163,6 +163,22 @@ Range::AddOffsuitRange(const string& s, const size_t& pos)
         }
 }
 
+void
+Range::AddPocketsRange(const string& s, const size_t& pos)
+{
+        string h(2, 'x');
+        size_t r1 = GetRank(s[pos]);
+        size_t r2 = GetRank(s[pos+3]);
+        size_t min = std::min(r1, r2);
+        size_t max = std::max(r1, r2);
+
+        for (size_t i = min; i < max; i++) {
+                h[0] = kRanks_[i];
+                h[1] = kRanks_[i];
+                AddOffsuit(h, 0);
+        }
+}
+
 Range::Range(const string& in)
 {
         string s(in);
@@ -201,6 +217,14 @@ Range::Range(const string& in)
                                 else
                                         range_.insert(
                                                 CardSet(s.substr(first, len)));
+                                break;
+                        case 5:
+                                if (s[first] == s[first+1] &&
+                                    s[first+2] == '-' &&
+                                    s[first+3] == s[first+4])
+                                        AddPocketsRange(s, first);
+                                else
+                                        FmtError(s.substr(first, len));
                                 break;
                         case 7:
                                 if (s[first+2] == 's' && s[first+3] == '-' &&
