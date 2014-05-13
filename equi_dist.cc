@@ -20,7 +20,10 @@ EquiDist::EquiDist(const Range& hero,
                    const CardSet& board)
 {
         switch (board.size()) {
-        case 3:                 // FALLTHROUGH
+        case 0:
+                InitPreflop(hero, villain);
+                break;
+        case 3:
         case 4:
                 InitFlopOrTurn(hero, villain, board);
                 break;
@@ -108,6 +111,44 @@ EquiDist::InitFlopOrTurn(const Range& hero,
                         }
                 }
         }
+}
+
+void
+EquiDist::InitPreflop(const Range& hero, const Range& villain)
+{
+        FILE *fp;
+        char h[4];
+        char v[4];
+        double EQh = 0;
+        double EQv = 0;
+        EQTable equity;
+
+        if ((fp = fopen(preflop_file_, "r")) == NULL) {
+                fprintf(stderr, "Can't open %s\n", preflop_file_);
+                exit(0);
+        }
+        while (fscanf(fp, "%s vs. %s : %lf vs. %lf", h, v, &EQh, &EQv)!=EOF) {
+                Range hr(h);
+                Range vr(v);
+                CardSet hc = hr.begin()->canonize();
+                CardSet vc = vr.begin()->canonize();
+                equity[std::pair<CardSet,CardSet>(hc, vc)] = EQh;
+                equity[std::pair<CardSet,CardSet>(vc, hc)] = EQv;
+        }
+        fclose(fp);
+
+        for (auto hit = hero.begin(); hit != hero.end(); ++hit)
+                for (auto vit = villain.begin(); vit != villain.end(); ++vit)
+                        if (hit->disjoint(*vit)) {
+                                CardSet hc = hit->canonize();
+                                CardSet vc = vit->canonize();
+                                if (hc == vc)
+                                        SetEquity(*hit, *vit, 0.5);
+                                else {
+                                        std::pair<CardSet,CardSet> p(hc, vc);
+                                        SetEquity(*hit, *vit, equity[p]);
+                                }
+                        }
 }
 
 double EquiDist::Equity(const CardSet& hero, const CardSet& villain)

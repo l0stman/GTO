@@ -17,6 +17,7 @@ public:
         // Return the equity of hero's hand against villain's or -1 if
         // it doesn't exit.
         virtual double Equity(const CardSet& hero, const CardSet& villain);
+
 private:
         void InitRiver(const Range& hero,
                        const Range& villain,
@@ -24,6 +25,7 @@ private:
         void InitFlopOrTurn(const Range& hero,
                             const Range& villain,
                             const CardSet& board);
+        void InitPreflop(const Range& hero, const Range& villain);
         void SetEquity(const CardSet& hero,
                        const CardSet& villain,
                        const double& val)
@@ -31,7 +33,6 @@ private:
                 std::pair<CardSet, CardSet> p(hero, villain);
                 equity_[p] = val;
         }
-
         struct CSPairHash {
                 // Use the function hash_combine from boost
                 void
@@ -49,10 +50,11 @@ private:
                         return seed;
                 }
         };
-
         typedef std::unordered_map<std::pair<CardSet, CardSet>, double,
                                    CSPairHash> EQTable;
+
         EQTable equity_;
+        const char *preflop_file_ = "preflop-matchups.txt";
 };
 }
 
