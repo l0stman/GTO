@@ -179,10 +179,34 @@ Range::AddPocketsRange(const string& s, const size_t& pos)
         }
 }
 
+void
+Range::AddSingleSuitRange(const string& s, const size_t& pos)
+{
+        string h(4, 'x');
+        size_t r1 = GetRank(s[pos]);
+        size_t r2 = GetRank(s[pos+2]);
+        size_t r3 = GetRank(s[pos+5]);
+        size_t r4 = GetRank(s[pos+7]);
+        size_t max = std::max(r1, r2);
+        size_t min1 = std::min(std::min(r1, r2), std::min(r3, r4));
+        size_t min2 = std::max(std::min(r1, r2), std::min(r3, r4));
+
+        if (max != std::max(r3, r4))
+                FmtError(s.substr(pos, 9));
+        h[0] = kRanks_[max];
+        h[1] = s[1];
+        h[3] = s[1];
+        for (size_t i = min1; i<=min2; ++i) {
+                h[2] = kRanks_[i];
+                range_.insert(h);
+        }
+}
+
 Range::Range(const string& in)
 {
         string s(in);
         size_t pos = 0;
+        char c;
         // Delete spaces from the input string.
         for (size_t i = 0; i < s.length(); i++)
                 if (!isspace(s[i]))
@@ -236,6 +260,14 @@ Range::Range(const string& in)
                                         AddOffsuitRange(s, first);
                                 else
                                         FmtError(s.substr(first, len));
+                                break;
+                        case 9:
+                                c = s[first+1];
+                                if (c != 'c' && c != 'h' && c != 'd' && c !='s')
+                                        FmtError(s.substr(first, len));
+                                if (s[first+3] == c && s[first+6] == c &&
+                                    s[first+8] == c && s[first+4] == '-')
+                                        AddSingleSuitRange(s, first);
                                 break;
                         default:
                                 FmtError(s.substr(first, len));
