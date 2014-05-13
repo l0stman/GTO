@@ -6,17 +6,33 @@
 #include <set>
 
 namespace {
+using std::string;
+
+const string kRanks_ = "23456789TJQKA";
+const string kSuits_ = "cdhs";
+
 void
-FmtError(const std::string& s)
+FmtError(const string& s)
 {
         fprintf(stderr, "Unknown range format: %s\n", s.c_str());
         exit(1);
+}
+
+inline size_t
+GetRank(const char& c)
+{
+        size_t r = kRanks_.find(c);
+        if (r == string::npos) {
+                fprintf(stderr, "Unknown rank: %c\n", c);
+                exit(1);
+        }
+        return r;
 }
 }
 
 namespace GTO {
 void
-Range::AddSuited(const string& s, size_t pos)
+Range::AddSuited(const string& s, const size_t& pos)
 {
         string h(4, 'x');
         h[0] = s[pos];
@@ -30,7 +46,7 @@ Range::AddSuited(const string& s, size_t pos)
 }
 
 void
-Range::AddOffsuit(const string& s, size_t pos)
+Range::AddOffsuit(const string& s, const size_t& pos)
 {
         string h(4, 'x');
         h[0] = s[pos];
@@ -43,6 +59,26 @@ Range::AddOffsuit(const string& s, size_t pos)
                                 h[3] = kSuits_[j];
                                 range_.insert(CardSet(h));
                         }
+}
+
+void
+Range::AddSuitedPlus(const string& s, const size_t& pos)
+{
+        string h(4, 'x');
+        size_t r1 = GetRank(s[pos]);
+        size_t r2 = GetRank(s[pos+1]);
+        size_t min = r1 < r2 ? r1 : r2;
+        size_t max = r1 < r2 ? r2 : r1;
+
+        h[0] = kRanks_[max];
+        for (r1 = min; r1 < max; ++r1) {
+                h[2] = kRanks_[r1];
+                for (r2 = 0; r2 < kSuits_.length(); ++r2) {
+                        h[1] = kSuits_[r2];
+                        h[3] = kSuits_[r2];
+                        range_.insert(CardSet(h));
+                }
+        }
 }
 
 Range::Range(const string& in)
@@ -76,7 +112,11 @@ Range::Range(const string& in)
                                 }
                                 break;
                         case 4:
-                                range_.insert(CardSet(s.substr(first, len)));
+                                if (s[first+2] == 's' && s[first+3] == '+')
+                                        AddSuitedPlus(s, first);
+                                else
+                                        range_.insert(
+                                                CardSet(s.substr(first, len)));
                                 break;
                         default:
                                 FmtError(s.substr(first, len));

@@ -56,11 +56,9 @@ public:
         const_iterator begin() const { return range_.begin();};
         const_iterator end() const { return range_.end();};
 private:
-        void AddSuited(const string& s, size_t pos);
-        void AddOffsuit(const string& s, size_t pos);
-
-        const string kRanks_ = "23456789TJQKA";
-        const string kSuits_ = "cdhs";
+        void AddSuited(const string& s, const size_t& pos);
+        void AddOffsuit(const string& s, const size_t& pos);
+        void AddSuitedPlus(const string& s, const size_t& pos);
         unordered_set<CardSet, CSHash> range_;
 };
 }
