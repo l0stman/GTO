@@ -16,7 +16,7 @@ public:
 
         // Return the equity of hero's hand against villain's or -1 if
         // it doesn't exit.
-        virtual double Equity(const CardSet& hero, const CardSet& villain);
+        virtual double Equity(const CardSet& hero, const CardSet& vill) const;
 
 private:
         void InitRiver(const Range& hero,

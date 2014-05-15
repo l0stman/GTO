@@ -151,10 +151,10 @@ EquiDist::InitPreflop(const Range& hero, const Range& villain)
                         }
 }
 
-double EquiDist::Equity(const CardSet& hero, const CardSet& villain)
+double EquiDist::Equity(const CardSet& hero, const CardSet& villain) const
 {
         std::pair<CardSet, CardSet> p(hero, villain);
 
-        return equity_.count(p) > 0 ? equity_[p] : -1;
+        return equity_.count(p) > 0 ? equity_.at(p) : -1;
 }
 }
