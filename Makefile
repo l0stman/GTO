@@ -1,6 +1,6 @@
 CC		= g++47 -std=c++11
-#CXXFLAGS	= -O0 -Wall -pedantic -g3
-CXXFLAGS	= -O3 -Wall -pedantic
+CXXFLAGS	= -O0 -Wall -pedantic -g3
+#CXXFLAGS	= -O3 -Wall -pedantic -DNDEBUG
 PREF		= ${HOME}/hacks/poker/pokerstove/src
 LDFLAGS		= -static $(PREF)/build/lib/pokerstove/peval/libpeval.a
 
