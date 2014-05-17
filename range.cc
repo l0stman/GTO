@@ -184,7 +184,7 @@ Range::AddPairsRange(const string& s, const size_t& pos)
         size_t min = std::min(r1, r2);
         size_t max = std::max(r1, r2);
 
-        for (size_t i = min; i < max; i++) {
+        for (size_t i = min; i <= max; i++) {
                 h[0] = kRanks_[i];
                 h[1] = kRanks_[i];
                 AddOffsuit(h, 0);
