@@ -176,7 +176,7 @@ Range::AddOffsuitRange(const string& s, const size_t& pos)
 }
 
 void
-Range::AddPocketsRange(const string& s, const size_t& pos)
+Range::AddPairsRange(const string& s, const size_t& pos)
 {
         string h(2, 'x');
         size_t r1 = GetRank(s[pos]);
@@ -285,7 +285,7 @@ Range::Range(const string& in)
                                     s[first+2] == '-' &&
                                     IsRank(s[first+3]) &&
                                     s[first+3] == s[first+4])
-                                        AddPocketsRange(s, first);
+                                        AddPairsRange(s, first);
                                 else if (IsRank(s[first]) &&
                                          IsRank(s[first+2]) &&
                                          IsSuit(s[first+1]) &&
