@@ -1,5 +1,6 @@
 #include "range.h"
 
+#include <algorithm>
 #include <cctype>
 #include <cstdio>
 #include <cstdlib>
@@ -30,10 +31,10 @@ ParseRanks(const string& s,
            size_t& min,
            size_t& max)
 {
-        size_t r1 = GetRank(s[pos]);
-        size_t r2 = GetRank(s[pos+1]);
-        min = std::min(r1, r2);
-        max = std::max(r1, r2);
+        std::pair<size_t,size_t> p = std::minmax(
+                GetRank(s[pos]), GetRank(s[pos+1]));
+        min = p.first;
+        max = p.second;
 }
 
 inline bool
@@ -133,9 +134,8 @@ Range::AddSuitedRange(const string& s, const size_t& pos)
         if (max1 != max2)
                 FmtError(s.substr(pos, 7));
         h[0] = kRanks_[max1];
-        max1 = std::min(min1, min2);
-        max2 = std::max(min1, min2);
-        for (size_t i = max1; i<=max2; ++i) {
+        std::pair<size_t,size_t> p = std::minmax(min1, min2);
+        for (size_t i = p.first; i<=p.second; ++i) {
                 h[2] = kRanks_[i];
                 for (size_t j = 0; j < kSuits_.length(); ++j) {
                         h[1] = kSuits_[j];
@@ -156,9 +156,8 @@ Range::AddOffsuitRange(const string& s, const size_t& pos)
         if (max1 != max2)
                 FmtError(s.substr(pos, 7));
         h[0] = kRanks_[max1];
-        max1 = std::min(min1, min2);
-        max2 = std::max(min1, min2);
-        for (size_t i = max1; i<=max2; ++i) {
+        std::pair<size_t,size_t> p = std::minmax(min1, min2);
+        for (size_t i = p.first; i<=p.second; ++i) {
                 h[2] = kRanks_[i];
                 for (size_t j = 0; j < kSuits_.length(); ++j)
                         for (size_t k = 0; k < kSuits_.length(); ++k)
@@ -174,12 +173,10 @@ void
 Range::AddPairsRange(const string& s, const size_t& pos)
 {
         string h(2, 'x');
-        size_t r1 = GetRank(s[pos]);
-        size_t r2 = GetRank(s[pos+3]);
-        size_t min = std::min(r1, r2);
-        size_t max = std::max(r1, r2);
+        std::pair<size_t,size_t> p = std::minmax(
+                GetRank(s[pos]), GetRank(s[pos+3]));
 
-        for (size_t i = min; i <= max; i++) {
+        for (size_t i = p.first; i <= p.second; i++) {
                 h[0] = kRanks_[i];
                 h[1] = kRanks_[i];
                 AddOffsuit(h, 0);
@@ -208,15 +205,15 @@ Range::AddSingleSuitRange(const string& s, const size_t& pos)
         size_t r3 = GetRank(s[pos+5]);
         size_t r4 = GetRank(s[pos+7]);
         size_t max = std::max(r1, r2);
-        size_t min1 = std::min(std::min(r1, r2), std::min(r3, r4));
-        size_t min2 = std::max(std::min(r1, r2), std::min(r3, r4));
+        std::pair<size_t,size_t> p = std::minmax(
+                std::min(r1, r2), std::min(r3, r4));
 
         if (max != std::max(r3, r4))
                 FmtError(s.substr(pos, 9));
         h[0] = kRanks_[max];
         h[1] = s[1];
         h[3] = s[1];
-        for (size_t i = min1; i<=min2; ++i) {
+        for (size_t i = p.first; i<=p.second; ++i) {
                 h[2] = kRanks_[i];
                 range_.insert(h);
         }
@@ -226,15 +223,13 @@ void
 Range::AddSingleSuitPlus(const string& s, const size_t& pos)
 {
         string h(4, 'x');
-        size_t r1 = GetRank(s[pos]);
-        size_t r2 = GetRank(s[pos+2]);
-        size_t min = std::min(r1, r2);
-        size_t max = std::max(r1, r2);
+        std::pair<size_t,size_t> p = std::minmax(
+                GetRank(s[pos]), GetRank(s[pos+2]));
 
-        h[0] = kRanks_[max];
+        h[0] = kRanks_[p.second];
         h[1] = s[pos+1];
         h[3] = s[pos+1];
-        for (size_t i = min; i < max; ++i) {
+        for (size_t i = p.first; i < p.second; ++i) {
                 h[2] = kRanks_[i];
                 range_.insert(h);
         }
