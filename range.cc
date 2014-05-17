@@ -192,6 +192,19 @@ Range::AddPairsRange(const string& s, const size_t& pos)
 }
 
 void
+Range::AddPairsPlus(const string& s, const size_t& pos)
+{
+        string h(2, 'x');
+        size_t r = GetRank('A');
+
+        for (size_t i = GetRank(s[pos]); i<=r; ++i) {
+                h[0] = kRanks_[i];
+                h[1] = kRanks_[i];
+                AddOffsuit(h, 0);
+        }
+}
+
+void
 Range::AddSingleSuitRange(const string& s, const size_t& pos)
 {
         string h(4, 'x');
@@ -262,6 +275,12 @@ Range::Range(const string& in)
                                         break;
                                 case 'o':
                                         AddOffsuit(s, first);
+                                        break;
+                                case '+':
+                                        if (s[first] == s[first+1])
+                                                AddPairsPlus(s, first);
+                                        else
+                                                FmtError(s.substr(first, len));
                                         break;
                                 default:
                                         FmtError(s.substr(first, len));
