@@ -247,11 +247,15 @@ Range::Range(const string& in)
                         size_t len = last-first;
                         switch (len) {
                         case 2:
+                                if (!IsRank(s[first]) || !IsRank(s[first+1]))
+                                        FmtError(s.substr(first, len));
                                 if (s[first] != s[first+1])
                                         AddSuited(s, first);
                                 AddOffsuit(s, first);
                                 break;
                         case 3:
+                                if (!IsRank(s[first]) || !IsRank(s[first+1]))
+                                        FmtError(s.substr(first, len));
                                 switch (s[first+2]) {
                                 case 's':
                                         AddSuited(s, first);
@@ -268,24 +272,33 @@ Range::Range(const string& in)
                                         AddSuitedPlus(s, first);
                                 else if (s[first+2] == 'o' && s[first+3] == '+')
                                         AddOffsuitPlus(s, first);
-                                else
+                                else if (IsRank(s[first])&&IsRank(s[first+2])&&
+                                         IsSuit(s[first+1])&&IsSuit(s[first+3]))
                                         range_.insert(
                                                 CardSet(s.substr(first, len)));
+                                else
+                                        FmtError(s.substr(first, len));
                                 break;
                         case 5:
-                                if (s[first] == s[first+1] &&
+                                if (IsRank(s[first]) &&
+                                    s[first] == s[first+1] &&
                                     s[first+2] == '-' &&
+                                    IsRank(s[first+3]) &&
                                     s[first+3] == s[first+4])
                                         AddPocketsRange(s, first);
-                                else if (s[first+4] == '+') {
-                                        c = s[first+1];
-                                        if (!IsSuit(c) || c != s[first+3])
-                                                FmtError(s.substr(first, len));
+                                else if (IsRank(s[first]) &&
+                                         IsRank(s[first+2]) &&
+                                         IsSuit(s[first+1]) &&
+                                         s[first+1] == s[first+3] &&
+                                         s[first+4] == '+')
                                         AddSingleSuitPlus(s, first);
-                                } else
+                                else
                                         FmtError(s.substr(first, len));
                                 break;
                         case 7:
+                                if (!IsRank(s[first]) || !IsRank(s[first+1]) ||
+                                    !IsRank(s[first+4]) || !IsRank(s[first+5]))
+                                        FmtError(s.substr(first, len));
                                 if (s[first+2] == 's' && s[first+3] == '-' &&
                                     s[first+6] == 's')
                                         AddSuitedRange(s, first);
@@ -297,11 +310,15 @@ Range::Range(const string& in)
                                         FmtError(s.substr(first, len));
                                 break;
                         case 9:
-                                if (!IsSuit(c = s[first+1]))
-                                        FmtError(s.substr(first, len));
-                                if (s[first+3] == c && s[first+6] == c &&
-                                    s[first+8] == c && s[first+4] == '-')
+                                c = s[first+1];
+                                if (IsRank(s[first]) && IsRank(s[first+2]) &&
+                                    IsRank(s[first+5]) && IsRank(s[first+7]) &&
+                                    IsSuit(c) && s[first+3] == c &&
+                                    s[first+6] == c && s[first+8] == c &&
+                                    s[first+4] == '-')
                                         AddSingleSuitRange(s, first);
+                                else
+                                        FmtError(s.substr(first, len));
                                 break;
                         default:
                                 FmtError(s.substr(first, len));
