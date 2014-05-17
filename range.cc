@@ -21,12 +21,7 @@ FmtError(const string& s)
 inline size_t
 GetRank(const char& c)
 {
-        size_t r = kRanks_.find(c);
-        if (r == string::npos) {
-                fprintf(stderr, "Unknown rank: %c\n", c);
-                exit(1);
-        }
-        return r;
+        return kRanks_.find(c);
 }
 
 inline void
@@ -50,7 +45,7 @@ IsSuit(const char& c)
 inline bool
 IsRank(const char& c)
 {
-        return kRanks_.find(c) != string::npos;
+        return GetRank(c) != string::npos;
 }
 }
 
