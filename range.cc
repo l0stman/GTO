@@ -40,6 +40,18 @@ ParseRanks(const string& s,
         min = std::min(r1, r2);
         max = std::max(r1, r2);
 }
+
+inline bool
+IsSuit(const char& c)
+{
+        return c == 'c' || c == 'd' || c == 'h' || c == 's';
+}
+
+inline bool
+IsRank(const char& c)
+{
+        return kRanks_.find(c) != string::npos;
+}
 }
 
 namespace GTO {
@@ -267,9 +279,7 @@ Range::Range(const string& in)
                                         AddPocketsRange(s, first);
                                 else if (s[first+4] == '+') {
                                         c = s[first+1];
-                                        if ((c != 'c' && c != 's' &&
-                                             c != 'd' && c != 'h') ||
-                                            (c != s[first+3]))
+                                        if (!IsSuit(c) || c != s[first+3])
                                                 FmtError(s.substr(first, len));
                                         AddSingleSuitPlus(s, first);
                                 } else
@@ -287,8 +297,7 @@ Range::Range(const string& in)
                                         FmtError(s.substr(first, len));
                                 break;
                         case 9:
-                                c = s[first+1];
-                                if (c != 'c' && c != 'h' && c != 'd' && c !='s')
+                                if (!IsSuit(c = s[first+1]))
                                         FmtError(s.substr(first, len));
                                 if (s[first+3] == c && s[first+6] == c &&
                                     s[first+8] == c && s[first+4] == '-')
