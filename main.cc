@@ -1,34 +1,19 @@
+#include <algorithm>
+#include <cstdio>
+#include <cassert>
+#include <cstdlib>
+#include <vector>
+
 #include "range.h"
 #include "equi_dist.h"
 
-#include <cstdio>
-#include <cstdlib>
-#include <utility>
-#include <vector>
-
-#include <pokerstove/peval/Card.h>
-#include <pokerstove/peval/PokerHandEvaluator.h>
-
-using GTO::Range;
-using pokerstove::CardSet;
-using pokerstove::PokerHandEvaluator;
+namespace {
 using std::vector;
-
-inline double
-Rand()
-{
-        return static_cast<double>(rand())/RAND_MAX;
-}
-
-inline void
-RandInit(vector<double>& V)
-{
-        for (size_t i = 0; i < V.size(); i++)
-                V[i] = Rand() < 0.5 ? 0 : 1;
-}
+using pokerstove::CardSet;
+using std::string;
 
 size_t
-AddRange(const Range& r, const CardSet& board, vector<CardSet>& hands)
+AddRange(const GTO::Range& r, const CardSet& board, vector<CardSet>& hands)
 {
         size_t s = 0;
 
@@ -40,180 +25,533 @@ AddRange(const Range& r, const CardSet& board, vector<CardSet>& hands)
         return s;
 }
 
-void
-ComputeEquity(const vector<CardSet>& hands,
-              const size_t& hsiz,
-              const Range& hero,
-              const Range& vill,
-              const CardSet& board,
-              vector<double>& equity)
-{
-        GTO::EquiDist eq(hero, vill, board);
-        size_t vsiz = hands.size()-hsiz;
+class EquiLUT {
+public:
+        explicit EquiLUT(const vector<CardSet>& hero,
+                         const vector<CardSet>& vill,
+                         const GTO::EquiDist& ED)
+                : hsize_(hero.size()), vsize_(vill.size())
+        {
+                equity_.reserve(hsize_*vsize_);
+                for (size_t i = 0; i < hsize_; ++i)
+                        for (size_t j = 0; j < vsize_; ++j) {
+                                size_t idx = i*vsize_+j;
+                                double EQ = ED.Equity(hero[i], vill[j]);
+                                if (EQ == -1) {
+                                        EQ = ED.Equity(vill[j], hero[i]);
+                                        if (EQ >= 0)
+                                                EQ = 1-EQ;
+                                }
+                                equity_[idx] = EQ;
+                        }
+        }
 
-        for (size_t i = 0; i < hsiz; i++)
-                for (size_t j = 0; j < vsiz; j++) {
-                        size_t idx = i*vsiz+j;
-                        equity[idx] = eq.Equity(hands[i], hands[hsiz+j]);
+        size_t NumRows() const { return hsize_; }
+        size_t NumCols() const { return vsize_; }
+
+        double Val(size_t hero, size_t vill) const
+        {
+                assert(hero < hsize_ && vill < vsize_);
+                return equity_[hero*vsize_+vill];
+        }
+
+private:
+        const double hsize_;
+        const double vsize_;
+        vector<double> equity_;
+};
+
+enum ActionType {
+        VILL_OPEN_FOLD = 0,
+        VILL_RAISE_FOLD,
+        VILL_4BET_FOLD,
+        VILL_4BET_CALL,
+        HERO_FOLD = 0,
+        HERO_3BET_FOLD,
+        HERO_5BET,
+};
+
+class Strategy;
+
+class Action {
+public:
+        virtual string Name() const = 0;
+        virtual double EV(const size_t& hand,
+                          const Strategy& opponent,
+                          const EquiLUT& equity) const = 0;
+};
+
+class Strategy {
+public:
+        explicit Strategy(const size_t& num_hands,
+                          const vector<Action *>& actions)
+                : nhands_(num_hands),
+                  nactions_(actions.size()),
+                  nsamples_(nactions_),
+                  actions_(vector<Action *>(actions))
+        {
+                assert(nactions_ > 0 && nhands_ > 0);
+                probs_.assign(nhands_*nactions_,
+                              1/static_cast<double>(nactions_));
+        }
+
+        double Prob(const size_t& hand, const ActionType& type) const
+        {
+                assert(hand < nhands_ && type < nactions_);
+                return probs_[hand*nactions_+type];
+        }
+
+        void Update(const Strategy& opponent, const EquiLUT& equity)
+        {
+                vector<size_t> best(nactions_);
+
+                srand(time(0));
+                for (size_t h = 0; h < nhands_; ++h) {
+                        double bestEV = actions_[0]->EV(h, opponent, equity);
+                        double nties = 0;
+                        best[0] = 0;
+                        for (size_t a = 1; a < nactions_; ++a) {
+                                double EV = actions_[a]->EV(h, opponent,equity);
+                                if (EV == bestEV)
+                                        best[++nties] = a;
+                                else if (EV > bestEV) {
+                                        bestEV = EV;
+                                        nties = 0;
+                                        best[0] = a;
+                                }
+                        }
+                        Inc(h, RandAction(best, nties+1));
                 }
-}
+                ++nsamples_;
+        }
+private:
+        inline ActionType
+        RandAction(const vector<size_t> A, const size_t& size)
+        {
+                size_t i = static_cast<size_t>(
+                        static_cast<double>(rand())/RAND_MAX*size);
+                return static_cast<ActionType>(A[i]);
+        }
 
-// Return the EV for hero when he bets a hand.
-double
-EVHeroBets(const size_t& h,
-           const vector<double>& equity,
-           const vector<double>& call_prob,
-           const double& stack,
-           const double& pot,
-           const double& bet)
-{
-        size_t vsiz = call_prob.size();
-        double EV = 0;
-        size_t N = 0;
-
-        for (size_t v = 0; v < vsiz; v++) {
-                size_t idx = h*vsiz+v;
-                if (equity[idx] >= 0) {
-                        N++;
-                        EV += (1-call_prob[v])*(pot+bet) +
-                                call_prob[v]*equity[idx]*(pot+2*bet);
+        void Inc(const size_t& hand, const ActionType& type)
+        {
+                assert(hand < nhands_ && type < nactions_);
+                for (size_t T = 0; T<nactions_; T++) {
+                        double d = (static_cast<ActionType>(T) == type) ? 1 : 0;
+                        size_t idx = hand*nactions_+T;
+                        probs_[idx] = (nsamples_*probs_[idx]+d)/(nsamples_+1);
                 }
         }
-        return N > 0 ? stack-bet + EV/N : -1;
-}
 
-// Return the EV for hero's when he and villain play the given
-// strategies.
-double
-EVHero(const vector<double>& equity,
-       const vector<double>& bet_prob,
-       const vector<double>& call_prob,
-       const double& stack,
-       const double& pot,
-       const double& bet)
-{
-        size_t hsiz = bet_prob.size();
-        size_t vsiz = call_prob.size();
-        double EV = 0;
-        size_t N = 0;
+        const size_t nhands_;
+        const size_t nactions_;
+        size_t nsamples_;
+        const vector<Action *> actions_;
+        vector<double> probs_;
+};
 
-        for (size_t h = 0; h < hsiz; h++)
-                for (size_t v = 0; v < vsiz; v++) {
-                        size_t idx = h*vsiz+v;
-                        if (equity[idx] == -1)
+class VillOpenFold : public Action {
+public:
+        VillOpenFold(const string& name, const double& stack)
+                : name_(name), stack_(stack)
+        {}
+
+        string Name() const { return name_; }
+
+        double EV(const size_t& hand,
+                  const Strategy& hero,
+                  const EquiLUT& equity) const
+        {
+                return stack_;
+        }
+private:
+        const string name_;
+        const double stack_;
+};
+
+class VillRaiseFold : public Action {
+public:
+        VillRaiseFold(const string& name,
+                      const double& stack,
+                      const double& blinds,
+                      const double& raise)
+                : name_(name),
+                  stack_(stack),
+                  blinds_(blinds),
+                  raise_(raise)
+        {}
+
+        string Name() const { return name_; }
+
+        double EV(const size_t& hand,
+                  const Strategy& hero,
+                  const EquiLUT& equity) const
+        {
+                double EQ = 0;
+                size_t N = 0;
+
+                for (size_t h = 0; h < equity.NumCols(); ++h) {
+                        if (equity.Val(hand, h) == -1)
                                 continue;
-                        N++;
-                        EV += bet_prob[h]*(
-                                stack-bet + (1-call_prob[v])*(pot+bet) +
-                                call_prob[v]*equity[idx]*(pot+2*bet));
-                        EV += (1-bet_prob[h])*stack;
+                        ++N;
+                        EQ += hero.Prob(h, HERO_FOLD);
                 }
-        return N > 0 ? EV/N : -1;
-}
+                return N > 0 ? stack_-raise_ + EQ/N*(blinds_+raise_) : -1;
+        }
+private:
+        const string name_;
+        const double stack_;
+        const double blinds_;
+        const double raise_;
+};
 
-// Return the EV for villain when he calls hero's bet with a
-// particular hand.
+class Vill4betFold : public Action {
+public:
+        Vill4betFold(const string& name,
+                     const double& stack,
+                     const double& blinds,
+                     const double& three_bet,
+                     const double& four_bet)
+                : name_(name),
+                  stack_(stack),
+                  blinds_(blinds),
+                  three_bet_(three_bet),
+                  four_bet_(four_bet)
+        {}
+
+        string Name() const { return name_; }
+
+        double EV(const size_t& hand,
+                  const Strategy& hero,
+                  const EquiLUT& equity) const
+        {
+                double EV = 0;
+                size_t N = 0;
+
+                for (size_t h = 0; h < equity.NumCols(); ++h) {
+                        if (equity.Val(hand, h) == -1)
+                                continue;
+                        ++N;
+                        EV += hero.Prob(h, HERO_FOLD)*(stack_+blinds_) +
+                                hero.Prob(h, HERO_3BET_FOLD) *
+                                (stack_+blinds_+three_bet_) +
+                                hero.Prob(h, HERO_5BET)*(stack_-four_bet_);
+                }
+                return N > 0 ? EV/N : -1;
+        }
+private:
+        const string name_;
+        const double stack_;
+        const double blinds_;
+        const double three_bet_;
+        const double four_bet_;
+};
+
+class Vill4betCall : public Action {
+public:
+        Vill4betCall(const string& name,
+                     const double& stack,
+                     const double& blinds,
+                     const double& three_bet)
+                : name_(name),
+                  stack_(stack),
+                  blinds_(blinds),
+                  three_bet_(three_bet)
+        {}
+
+        string Name() const { return name_; }
+
+        double EV(const size_t& hand,
+                  const Strategy& hero,
+                  const EquiLUT& equity) const
+        {
+                double EV = 0;
+                size_t N = 0;
+
+                for (size_t h = 0; h < equity.NumCols(); ++h) {
+                        double EQ = equity.Val(hand, h);
+                        if (EQ == -1)
+                                continue;
+                        ++N;
+                        EV += hero.Prob(h, HERO_FOLD)*(stack_+blinds_) +
+                                hero.Prob(h, HERO_3BET_FOLD) *
+                                (stack_ + blinds_ + three_bet_) +
+                                hero.Prob(h, HERO_5BET)*EQ*(blinds_ + 2*stack_);
+                }
+                return N > 0 ? EV/N : -1;
+        }
+private:
+        const string name_;
+        const double stack_;
+        const double blinds_;
+        const double three_bet_;
+};
+
+class HeroFold : public Action {
+public:
+        HeroFold(const string& name,
+                 const double& stack)
+                : name_(name),
+                  stack_(stack)
+        {}
+
+        string Name() const { return name_; }
+
+        double EV(const size_t& hand,
+                  const Strategy& vill,
+                  const EquiLUT& equity) const
+        {
+                return stack_;
+        }
+private:
+        const string name_;
+        const double stack_;
+};
+
+class Hero3betFold : public Action {
+public:
+        Hero3betFold(const string& name,
+                     const double& stack,
+                     const double& blinds,
+                     const double& raise,
+                     const double& three_bet)
+                : name_(name),
+                  stack_(stack),
+                  blinds_(blinds),
+                  raise_(raise),
+                  three_bet_(three_bet)
+        {}
+
+        string Name() const { return name_; }
+
+        double EV(const size_t& hand,
+                  const Strategy& vill,
+                  const EquiLUT& equity) const
+        {
+                double EV = 0;
+                size_t N = 0;
+
+                for (size_t v = 0; v < equity.NumCols(); ++v) {
+                        if (equity.Val(hand, v) == -1)
+                                continue;
+                        ++N;
+                        EV += vill.Prob(v, VILL_OPEN_FOLD)*(stack_+blinds_) +
+                                vill.Prob(v, VILL_RAISE_FOLD) *
+                                (stack_ + blinds_ + raise_) +
+                                (vill.Prob(v, VILL_4BET_FOLD) +
+                                 vill.Prob(v, VILL_4BET_CALL)) *
+                                (stack_ - three_bet_);
+                }
+                return N > 0 ? EV/N : -1;
+        }
+private:
+        const string name_;
+        const double stack_;
+        const double blinds_;
+        const double raise_;
+        const double three_bet_;
+};
+
+class Hero5bet : public Action {
+public:
+        Hero5bet(const string& name,
+                 const double& stack,
+                 const double& blinds,
+                 const double& raise,
+                 const double& four_bet)
+                : name_(name),
+                  stack_(stack),
+                  blinds_(blinds),
+                  raise_(raise),
+                  four_bet_(four_bet)
+        {}
+
+        string Name() const { return name_; }
+
+        double EV(const size_t& hand,
+                  const Strategy& vill,
+                  const EquiLUT& equity) const
+        {
+                double EV = 0;
+                size_t N = 0;
+
+                for (size_t v = 0; v < equity.NumCols(); ++v) {
+                        double EQh = equity.Val(hand, v);
+                        if (EQh == -1)
+                                continue;
+                        ++N;
+                        EV += vill.Prob(v, VILL_OPEN_FOLD)*(stack_+blinds_) +
+                                vill.Prob(v, VILL_RAISE_FOLD) *
+                                (stack_ + blinds_ + raise_) +
+                                vill.Prob(v, VILL_4BET_FOLD) *
+                                (stack_ + blinds_ + four_bet_) +
+                                vill.Prob(v, VILL_4BET_CALL) *
+                                EQh*(blinds_ + 2*stack_);
+                }
+                return N > 0 ? EV/N : -1;
+        }
+private:
+        const string name_;
+        const double stack_;
+        const double blinds_;
+        const double raise_;
+        const double four_bet_;
+};
+
 double
-EVVillCalls(const size_t& v,
-            const vector<double>& equity,
-            const vector<double>& bet_prob,
-            const double& stack,
-            const double& pot,
-            const double& bet)
+HeroEV(const Strategy& hero,
+       const Strategy& vill,
+       const EquiLUT& equity,
+       const double& stack,
+       const double& blinds,
+       const double& raise,
+       const double& three_bet,
+       const double& four_bet)
 {
-        size_t hsiz = bet_prob.size();
-        size_t vsiz = equity.size()/hsiz;
         double EV = 0;
         double N = 0;
 
-        for (size_t h = 0; h < hsiz; h++) {
-                size_t idx = h*vsiz+v;
-                if (equity[idx] >= 0) {
-                        N += bet_prob[h];
-                        EV += bet_prob[h]*
-                                (stack-bet+(1-equity[idx])*(pot + 2*bet));
+        for (size_t h = 0; h < equity.NumRows(); ++h)
+                for (size_t v = 0; v < equity.NumCols(); ++v) {
+                        double EQ = equity.Val(h, v);
+                        if (EQ == -1)
+                                continue;
+                        ++N;
+                        EV += hero.Prob(h, HERO_FOLD)*stack;
+                        EV += hero.Prob(h, HERO_3BET_FOLD)*(
+                                vill.Prob(v, VILL_OPEN_FOLD)*(stack+blinds) +
+                                vill.Prob(v, VILL_RAISE_FOLD)*(
+                                        stack+blinds+raise) +
+                                (vill.Prob(v, VILL_4BET_FOLD) +
+                                 vill.Prob(v, VILL_4BET_CALL))*(
+                                         stack-three_bet));
+                        EV += hero.Prob(h, HERO_5BET)*(
+                                vill.Prob(v, VILL_OPEN_FOLD)*(stack+blinds) +
+                                vill.Prob(v, VILL_RAISE_FOLD)*(
+                                        stack+blinds+raise) +
+                                vill.Prob(v, VILL_4BET_FOLD)*(
+                                        stack+blinds+four_bet) +
+                                vill.Prob(v, VILL_4BET_CALL)*EQ*(
+                                        blinds+2*stack));
                 }
-        }
         return N > 0 ? EV/N : -1;
 }
 
-void
-UpdateHeroStrategy(const vector<double>& equity,
-                   const size_t& nsamples,
-                   const vector<double>& call_prob,
-                   const double& stack,
-                   const double& pot,
-                   const double& bet,
-                   vector<double>& bet_prob)
-{
-        size_t hsiz = bet_prob.size();
+struct Record {
+        size_t hand;
+        double prob;
+        double EV;
 
-        for (size_t h = 0; h < hsiz; h++) {
-                double EV_bets = EVHeroBets(h, equity, call_prob, stack, pot,
-                                            bet);
-                double d = 0;
-                if (stack < EV_bets ||
-                    (stack == EV_bets && Rand() < 0.5))
-                        d = 1;
-                bet_prob[h] = ((nsamples-1)*bet_prob[h] + d)/nsamples;
+        Record(const size_t& hand,
+               const double& prob,
+               const double& EV)
+                : hand(hand), prob(prob), EV(EV)
+        {}
+
+        bool operator<(const Record& rhs) const
+        {
+                return rhs.prob < prob ||
+                                  (rhs.prob == prob && rhs.EV < EV);
         }
-}
+};
 
 void
-UpdateVillStrategy(const vector<double>& equity,
-                   const size_t& nsamples,
-                   const vector<double>& bet_prob,
-                   const double& stack,
-                   const double& pot,
-                   const double& bet,
-                   vector<double>& call_prob)
+PrintResults(const vector<CardSet>& hands,
+             const Strategy& hero,
+             const Strategy& vill,
+             const vector<Action *>& actions,
+             const EquiLUT& equity)
 {
-        for (size_t v = 0; v < call_prob.size(); v++) {
-                double EV = EVVillCalls(v, equity, bet_prob, stack, pot, bet);
-                double d = 0;
+        size_t size = hands.size();
+        vector<Record> R;
 
-                if (stack < EV || (stack == EV && Rand() < 0.5))
-                        d = 1;
-                call_prob[v] = ((nsamples-1)*call_prob[v] + d)/nsamples;
+        for (size_t a = 0; a < actions.size(); ++a) {
+                size_t N = 0;
+                ActionType T = static_cast<ActionType>(a);
+                printf("%s range:\n", actions[a]->Name().c_str());
+                printf("Hand\tProb\tEV\n");
+                R.clear();
+                R.reserve(size);
+                for (size_t h = 0; h < size; ++h) {
+                        double p = hero.Prob(h, T);
+                        if (p < 0.05)
+                                continue;
+                        ++N;
+                        R.push_back(Record(h,p,actions[T]->EV(h, vill,equity)));
+                }
+                sort(R.begin(), R.begin()+N);
+                for (size_t i = 0; i < N; ++i)
+                        printf("%s\t%.4f\t%.4f\n",
+                               hands[R[i].hand].str().c_str(),
+                               R[i].prob,
+                               R[i].EV);
+                printf("\n");
         }
 }
+}
+
+using GTO::Range;
+using pokerstove::CardSet;
 
 int
 main(int argc, char *argv[])
 {
-        Range hero("AcJc,KcJc,QcJc,JcTc,5c4c,KcJh,QcJh,KdJc,QdJc,5d4d,KdJh,QdJh,KhJc,QhJc,Ah2h,Ah5h,Ah8h,AhJh,KhJh,QhJh,JhTh,AsTc,KsJc,QsJc,AsTd,AsTh,KsJh,QsJh,Qs6s-QsTs,Ts7s,9s7s,8s7s,3d3c,3h3c,3h3d,6s6c,6d6c,6d6s,AsAc,AdAc,AhAc");
-        Range vill("44,55,77-JJ,A3s,A6s,K6s,KJs,Q6s,QJs,J2s+,62s-64s,A6o,K6o,Q6o,J4o+,T6o,96o,86o,76o,65o,Ts4s+,9s4s+,8s4s+,7s6s,6s5s,3d3c,6d6c,QsQc,QdQc,QhQc,KsKc,KdKc,KhKc,AsAc,AdAc,AhAc");
-        CardSet board("Js6h3sJd2d");
-        vector<CardSet> hands;
-        size_t hsiz = AddRange(hero, board, hands);
-        size_t vsiz = AddRange(vill, board, hands);
-        vector<double> equity(hsiz*vsiz, -1);
-        vector<double> bet_prob(hsiz, 0);
-        vector<double> call_prob(vsiz, 0);
-        const double pot = 53;
-        const double stack = 48.5;
+        Range hero("22+,A2s+,K6s+,Q8s+,J8s+,T7s+,96s+,85s+,74s+,63s+,52s+,42s+,32s,A8o+,K9o+,QTo+,JTo");
+        Range vill("77+,A7s+,K9s+,QTs+,JTs,ATo+,KTo+,QJo");
+        CardSet board;
+        vector<CardSet> hhands;
+        vector<CardSet> vhands;
+        double stack = 100;
+        double blinds = 1.5;
+        double raise = 3;
+        double three_bet = 9;
+        double four_bet = 27;
 
-        fprintf(stderr, "Hero: %d hands, Villain: %d hands.\n", hsiz, vsiz);
-        ComputeEquity(hands, hsiz, hero, vill, board, equity);
+        size_t hsiz = AddRange(hero, board, hhands);
+        size_t vsiz = AddRange(vill, board, vhands);
+        GTO::EquiDist ED(hero, vill, board);
+        EquiLUT hequity(hhands, vhands, ED);
+        EquiLUT vequity(vhands, hhands, ED);
+        vector<Action *> vactions(4);
+        vector<Action *> hactions(3);
 
-        srand(time(0));
-        RandInit(bet_prob);
-        RandInit(call_prob);
-        for (size_t nsamples = 2; nsamples < 50000; nsamples++) {
-                UpdateVillStrategy(equity, nsamples, bet_prob, stack, pot, stack, call_prob);
-                UpdateHeroStrategy(equity, nsamples, call_prob, stack, pot, stack, bet_prob);
+        vactions[VILL_OPEN_FOLD] = new VillOpenFold("Open fold", stack);
+        vactions[VILL_RAISE_FOLD] = new VillRaiseFold(
+                "Open raise bluff", stack, blinds, raise);
+        vactions[VILL_4BET_FOLD] = new Vill4betFold(
+                "4-bet bluff", stack, blinds, three_bet, four_bet);
+        vactions[VILL_4BET_CALL] = new Vill4betCall(
+                "4-bet call", stack, blinds, three_bet);
+        hactions[HERO_FOLD] = new HeroFold("Fold", stack);
+        hactions[HERO_3BET_FOLD] = new Hero3betFold(
+                "3-bet bluff", stack, blinds, raise, three_bet);
+        hactions[HERO_5BET] = new Hero5bet(
+                "5-bet", stack, blinds, raise, four_bet);
+
+        Strategy hstrategy(hsiz, hactions);
+        Strategy vstrategy(vsiz, vactions);
+
+        double EV = 0;
+        for (size_t i = 0; i < 10000; ++i) {
+                hstrategy.Update(vstrategy, hequity);
+                vstrategy.Update(hstrategy, vequity);
+                if (i % 100 == 0) {
+                        EV = HeroEV(hstrategy,
+                                    vstrategy,
+                                    hequity,
+                                    stack,
+                                    blinds,
+                                    raise,
+                                    three_bet,
+                                    four_bet);
+                        fprintf(stderr, "Iteration %d: EV(EP) = %.6f, \
+EV(BTN) = %.6f\n", i, blinds+2*stack-EV, EV);
+                }
         }
-        double EV = EVHero(equity, bet_prob, call_prob, stack, pot, stack);
-        fprintf(stderr, "Hero EV = %.4f\n", EV);
-        fprintf(stderr, "Hero:\n");
-        for (size_t h = 0; h < hsiz; h++)
-                if (bet_prob[h] >= 0.05) {
-                fprintf(stderr, "%s: %.4f, EV = %.4f\n", hands[h].str().c_str(), bet_prob[h], bet_prob[h]*EVHeroBets(h, equity, call_prob, stack, pot, stack)+(1-bet_prob[h])*stack);
-        }
-        fprintf(stderr, "Villain:\n");
-        for (size_t v = 0; v < vsiz; v++)
-                if (call_prob[v] >= 0.05) {
-                fprintf(stderr, "%s: %.4f, EV = %.4f\n", hands[hsiz+v].str().c_str(), call_prob[v], call_prob[v]*EVVillCalls(v, equity, bet_prob, stack, pot, stack)+(1-call_prob[v])*stack);
-        }
+        printf("UTG: EV = %.4f\n", blinds+2*stack-EV);
+        PrintResults(vhands, vstrategy, hstrategy, vactions, vequity);
+        printf("\nBTN: EV = %.4f\n", EV);
+        PrintResults(hhands, hstrategy, vstrategy, hactions, hequity);
+
         return 0;
 }
