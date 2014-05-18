@@ -1,12 +1,12 @@
 CC		= g++47 -std=c++11
-CXXFLAGS	= -O0 -Wall -pedantic -g3
-#CXXFLAGS	= -O3 -Wall -pedantic -DNDEBUG
+#CXXFLAGS	= -O0 -Wall -pedantic -g3
+CXXFLAGS	= -O3 -Wall -pedantic -DNDEBUG
 PREF		= ${HOME}/hacks/poker/pokerstove/src
 LDFLAGS		= -static $(PREF)/build/lib/pokerstove/peval/libpeval.a
 
 INCLUDES	= -I /usr/local/include -I $(PREF)/lib
 OBJS		= main.o range.o equi_dist.o
-PROGNAME	= test
+PROGNAME	= 5bet
 
 $(PROGNAME) : $(OBJS)
 	$(CC) -o $(.TARGET) $(.ALLSRC) $(LDFLAGS)
