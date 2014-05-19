@@ -12,17 +12,12 @@ using std::vector;
 using pokerstove::CardSet;
 using std::string;
 
-size_t
+void
 AddRange(const GTO::Range& r, const CardSet& board, vector<CardSet>& hands)
 {
-        size_t s = 0;
-
         for (auto it = r.begin(); it != r.end(); it++)
-                if (board.disjoint(*it)) {
-                        s++;
+                if (board.disjoint(*it))
                         hands.push_back(*it);
-                }
-        return s;
 }
 
 class EquiLUT {
@@ -585,8 +580,8 @@ main(int argc, char *argv[])
 
 //        hero.Fill();
 //        vill.Fill();
-        size_t hsiz = AddRange(hero, board, hhands);
-        size_t vsiz = AddRange(vill, board, vhands);
+        AddRange(hero, board, hhands);
+        AddRange(vill, board, vhands);
         GTO::EquiDist ED(hero, vill, board);
         vector<Action *> vactions(4);
         vector<Action *> hactions(4);
@@ -610,7 +605,7 @@ main(int argc, char *argv[])
         Strategy vstrategy(vactions, vhands, hhands, ED);
 
         double EV = 0;
-        for (size_t i = 0; i < 100; ++i) {
+        for (size_t i = 0; i < 10000; ++i) {
                 hstrategy.Update(vstrategy);
                 vstrategy.Update(hstrategy);
                 if (i % 100 == 0) {
