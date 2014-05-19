@@ -67,6 +67,7 @@ enum ActionType {
         VILL_4BET_FOLD,
         VILL_4BET_CALL,
         HERO_FOLD = 0,
+        HERO_FLAT_CALL,
         HERO_3BET_FOLD,
         HERO_5BET,
 };
@@ -187,16 +188,22 @@ public:
                   const Strategy& hero,
                   const EquiLUT& equity) const
         {
-                double EQ = 0;
+                double EV = 0;
                 size_t N = 0;
 
                 for (size_t h = 0; h < equity.NumCols(); ++h) {
-                        if (equity.Val(hand, h) == -1)
+                        double EQ = equity.Val(hand, h);
+                        if (EQ == -1)
                                 continue;
                         ++N;
-                        EQ += hero.Prob(h, HERO_FOLD);
+                        double pot = blinds_+2*raise_;
+                        EV += hero.Prob(h, HERO_FOLD)*(stack_+blinds_) +
+                                hero.Prob(h, HERO_FLAT_CALL)*(
+                                        stack_-raise_-pot+EQ*2*(raise_+pot)) +
+                                (hero.Prob(h, HERO_3BET_FOLD) +
+                                 hero.Prob(h, HERO_5BET))*(stack_-raise_);
                 }
-                return N > 0 ? stack_-raise_ + EQ/N*(blinds_+raise_) : -1;
+                return N > 0 ? EV/N : -1;
         }
 private:
         const string name_;
@@ -210,11 +217,13 @@ public:
         Vill4betFold(const string& name,
                      const double& stack,
                      const double& blinds,
+                     const double& raise,
                      const double& three_bet,
                      const double& four_bet)
                 : name_(name),
                   stack_(stack),
                   blinds_(blinds),
+                  raise_(raise),
                   three_bet_(three_bet),
                   four_bet_(four_bet)
         {}
@@ -229,10 +238,14 @@ public:
                 size_t N = 0;
 
                 for (size_t h = 0; h < equity.NumCols(); ++h) {
-                        if (equity.Val(hand, h) == -1)
+                        double EQ = equity.Val(hand, h);
+                        if (EQ == -1)
                                 continue;
                         ++N;
+                        double pot = blinds_+2*raise_;
                         EV += hero.Prob(h, HERO_FOLD)*(stack_+blinds_) +
+                                hero.Prob(h, HERO_FLAT_CALL) *
+                                (stack_-raise_-pot+EQ*2*(raise_+pot)) +
                                 hero.Prob(h, HERO_3BET_FOLD) *
                                 (stack_+blinds_+three_bet_) +
                                 hero.Prob(h, HERO_5BET)*(stack_-four_bet_);
@@ -243,6 +256,7 @@ private:
         const string name_;
         const double stack_;
         const double blinds_;
+        const double raise_;
         const double three_bet_;
         const double four_bet_;
 };
@@ -252,10 +266,12 @@ public:
         Vill4betCall(const string& name,
                      const double& stack,
                      const double& blinds,
+                     const double& raise,
                      const double& three_bet)
                 : name_(name),
                   stack_(stack),
                   blinds_(blinds),
+                  raise_(raise),
                   three_bet_(three_bet)
         {}
 
@@ -273,7 +289,10 @@ public:
                         if (EQ == -1)
                                 continue;
                         ++N;
+                        double pot = blinds_+2*raise_;
                         EV += hero.Prob(h, HERO_FOLD)*(stack_+blinds_) +
+                                hero.Prob(h, HERO_FLAT_CALL) *
+                                (stack_-raise_-pot+EQ*2*(raise_+pot)) +
                                 hero.Prob(h, HERO_3BET_FOLD) *
                                 (stack_ + blinds_ + three_bet_) +
                                 hero.Prob(h, HERO_5BET)*EQ*(blinds_ + 2*stack_);
@@ -284,6 +303,7 @@ private:
         const string name_;
         const double stack_;
         const double blinds_;
+        const double raise_;
         const double three_bet_;
 };
 
@@ -306,6 +326,46 @@ public:
 private:
         const string name_;
         const double stack_;
+};
+
+class HeroFlatCall : public Action {
+public:
+        HeroFlatCall(const string& name,
+                     const double& stack,
+                     const double& blinds,
+                     const double& raise)
+                : name_(name),
+                  stack_(stack),
+                  blinds_(blinds),
+                  raise_(raise)
+        {}
+
+        string Name() const { return name_; }
+
+        double EV(const size_t& hand,
+                  const Strategy& vill,
+                  const EquiLUT& equity) const
+        {
+                double EV = 0;
+                size_t N = 0;
+
+                for (size_t v = 0; v < equity.NumCols(); ++v) {
+                        double EQ = equity.Val(hand, v);
+                        if (EQ == -1)
+                                continue;
+                        double pot = blinds_+2*raise_;
+                        double p = vill.Prob(v, VILL_OPEN_FOLD);
+                        ++N;
+                        EV += p*(stack_+blinds_) +
+                                (1-p)*(stack_-raise_-pot + EQ*2*(raise_+pot));
+                }
+                return N > 0 ? EV/N : -1;
+        }
+private:
+        const string name_;
+        const double stack_;
+        const double blinds_;
+        const double raise_;
 };
 
 class Hero3betFold : public Action {
@@ -417,7 +477,10 @@ HeroEV(const Strategy& hero,
                         if (EQ == -1)
                                 continue;
                         ++N;
+                        double pot = blinds+2*raise;
                         EV += hero.Prob(h, HERO_FOLD)*stack;
+                        EV += hero.Prob(h, HERO_FLAT_CALL)*(
+                                stack-pot-raise+EQ*2*(pot+raise));
                         EV += hero.Prob(h, HERO_3BET_FOLD)*(
                                 vill.Prob(v, VILL_OPEN_FOLD)*(stack+blinds) +
                                 vill.Prob(v, VILL_RAISE_FOLD)*(
@@ -467,9 +530,8 @@ PrintResults(const vector<CardSet>& hands,
 
         for (size_t a = 0; a < actions.size(); ++a) {
                 size_t N = 0;
+                double total = 0;
                 ActionType T = static_cast<ActionType>(a);
-                printf("%s range:\n", actions[a]->Name().c_str());
-                printf("Hand\tProb\tEV\n");
                 R.clear();
                 R.reserve(size);
                 for (size_t h = 0; h < size; ++h) {
@@ -477,8 +539,12 @@ PrintResults(const vector<CardSet>& hands,
                         if (p < 0.05)
                                 continue;
                         ++N;
+                        total += p;
                         R.push_back(Record(h,p,actions[T]->EV(h, vill,equity)));
                 }
+                printf("%s range: %.2f hand%c\n", actions[a]->Name().c_str(),
+                       total, total > 1 ? 's' : ' ');
+                printf("Hand\tProb\tEV\n");
                 sort(R.begin(), R.begin()+N);
                 for (size_t i = 0; i < N; ++i)
                         printf("%s\t%.4f\t%.4f\n",
@@ -507,22 +573,26 @@ main(int argc, char *argv[])
         double three_bet = 9;
         double four_bet = 27;
 
+        hero.Fill();
+        vill.Fill();
         size_t hsiz = AddRange(hero, board, hhands);
         size_t vsiz = AddRange(vill, board, vhands);
         GTO::EquiDist ED(hero, vill, board);
         EquiLUT hequity(hhands, vhands, ED);
         EquiLUT vequity(vhands, hhands, ED);
         vector<Action *> vactions(4);
-        vector<Action *> hactions(3);
+        vector<Action *> hactions(4);
 
         vactions[VILL_OPEN_FOLD] = new VillOpenFold("Open fold", stack);
         vactions[VILL_RAISE_FOLD] = new VillRaiseFold(
                 "Open raise bluff", stack, blinds, raise);
         vactions[VILL_4BET_FOLD] = new Vill4betFold(
-                "4-bet bluff", stack, blinds, three_bet, four_bet);
+                "4-bet bluff", stack, blinds, raise, three_bet, four_bet);
         vactions[VILL_4BET_CALL] = new Vill4betCall(
-                "4-bet call", stack, blinds, three_bet);
+                "4-bet call", stack, blinds, raise, three_bet);
         hactions[HERO_FOLD] = new HeroFold("Fold", stack);
+        hactions[HERO_FLAT_CALL] = new HeroFlatCall(
+                "Flat call", stack, blinds, raise);
         hactions[HERO_3BET_FOLD] = new Hero3betFold(
                 "3-bet bluff", stack, blinds, raise, three_bet);
         hactions[HERO_5BET] = new Hero5bet(
