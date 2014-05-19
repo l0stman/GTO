@@ -128,6 +128,12 @@ public:
                 }
                 ++nsamples_;
         }
+
+        const EquiLUT& LUT() const
+        {
+                return equity_;
+        }
+
 private:
         inline ActionType
         RandAction(const vector<size_t> A, const size_t& size)
@@ -465,7 +471,6 @@ private:
 double
 HeroEV(const Strategy& hero,
        const Strategy& vill,
-       const EquiLUT& equity,
        const double& stack,
        const double& blinds,
        const double& raise,
@@ -474,6 +479,7 @@ HeroEV(const Strategy& hero,
 {
         double EV = 0;
         double N = 0;
+        const EquiLUT& equity = hero.LUT();
 
         for (size_t h = 0; h < equity.NumRows(); ++h)
                 for (size_t v = 0; v < equity.NumCols(); ++v) {
@@ -526,8 +532,7 @@ void
 PrintResults(const vector<CardSet>& hands,
              const Strategy& hero,
              const Strategy& vill,
-             const vector<Action *>& actions,
-             const EquiLUT& equity)
+             const vector<Action *>& actions)
 {
         size_t size = hands.size();
         vector<Record> R;
@@ -544,7 +549,8 @@ PrintResults(const vector<CardSet>& hands,
                                 continue;
                         ++N;
                         total += p;
-                        R.push_back(Record(h,p,actions[T]->EV(h, vill,equity)));
+                        R.push_back(
+                                Record(h,p,actions[T]->EV(h,vill,hero.LUT())));
                 }
                 printf("%s range: %.2f hand%c\n", actions[a]->Name().c_str(),
                        total, total > 1 ? 's' : ' ');
@@ -582,8 +588,6 @@ main(int argc, char *argv[])
         size_t hsiz = AddRange(hero, board, hhands);
         size_t vsiz = AddRange(vill, board, vhands);
         GTO::EquiDist ED(hero, vill, board);
-        EquiLUT hequity(hhands, vhands, ED);
-        EquiLUT vequity(vhands, hhands, ED);
         vector<Action *> vactions(4);
         vector<Action *> hactions(4);
 
@@ -612,7 +616,6 @@ main(int argc, char *argv[])
                 if (i % 100 == 0) {
                         EV = HeroEV(hstrategy,
                                     vstrategy,
-                                    hequity,
                                     stack,
                                     blinds,
                                     raise,
@@ -623,9 +626,9 @@ EV(BTN) = %.6f\n", i, blinds+2*stack-EV, EV);
                 }
         }
         printf("UTG: EV = %.4f\n", blinds+2*stack-EV);
-        PrintResults(vhands, vstrategy, hstrategy, vactions, vequity);
+        PrintResults(vhands, vstrategy, hstrategy, vactions);
         printf("\nBTN: EV = %.4f\n", EV);
-        PrintResults(hhands, hstrategy, vstrategy, hactions, hequity);
+        PrintResults(hhands, hstrategy, vstrategy, hactions);
 
         return 0;
 }
