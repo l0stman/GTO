@@ -84,12 +84,15 @@ public:
 
 class Strategy {
 public:
-        explicit Strategy(const size_t& num_hands,
-                          const vector<Action *>& actions)
-                : nhands_(num_hands),
-                  nactions_(actions.size()),
+        explicit Strategy(const vector<Action *>& hero_actions,
+                          const vector<CardSet>& hero_hands,
+                          const vector<CardSet>& vill_hands,
+                          const GTO::EquiDist& ED)
+                : nhands_(hero_hands.size()),
+                  nactions_(hero_actions.size()),
                   nsamples_(nactions_),
-                  actions_(vector<Action *>(actions))
+                  actions_(vector<Action *>(hero_actions)),
+                  equity_(EquiLUT(hero_hands, vill_hands, ED))
         {
                 assert(nactions_ > 0 && nhands_ > 0);
                 probs_.assign(nhands_*nactions_,
@@ -102,17 +105,17 @@ public:
                 return probs_[hand*nactions_+type];
         }
 
-        void Update(const Strategy& opponent, const EquiLUT& equity)
+        void Update(const Strategy& opponent)
         {
                 vector<size_t> best(nactions_);
 
                 srand(time(0));
                 for (size_t h = 0; h < nhands_; ++h) {
-                        double bestEV = actions_[0]->EV(h, opponent, equity);
+                        double bestEV = actions_[0]->EV(h, opponent, equity_);
                         double nties = 0;
                         best[0] = 0;
                         for (size_t a = 1; a < nactions_; ++a) {
-                                double EV = actions_[a]->EV(h, opponent,equity);
+                                double EV = actions_[a]->EV(h,opponent,equity_);
                                 if (EV == bestEV)
                                         best[++nties] = a;
                                 else if (EV > bestEV) {
@@ -148,6 +151,7 @@ private:
         const size_t nactions_;
         size_t nsamples_;
         const vector<Action *> actions_;
+        const EquiLUT equity_;
         vector<double> probs_;
 };
 
@@ -573,8 +577,8 @@ main(int argc, char *argv[])
         double three_bet = 9;
         double four_bet = 27;
 
-        hero.Fill();
-        vill.Fill();
+//        hero.Fill();
+//        vill.Fill();
         size_t hsiz = AddRange(hero, board, hhands);
         size_t vsiz = AddRange(vill, board, vhands);
         GTO::EquiDist ED(hero, vill, board);
@@ -598,13 +602,13 @@ main(int argc, char *argv[])
         hactions[HERO_5BET] = new Hero5bet(
                 "5-bet", stack, blinds, raise, four_bet);
 
-        Strategy hstrategy(hsiz, hactions);
-        Strategy vstrategy(vsiz, vactions);
+        Strategy hstrategy(hactions, hhands, vhands, ED);
+        Strategy vstrategy(vactions, vhands, hhands, ED);
 
         double EV = 0;
-        for (size_t i = 0; i < 10000; ++i) {
-                hstrategy.Update(vstrategy, hequity);
-                vstrategy.Update(hstrategy, vequity);
+        for (size_t i = 0; i < 100; ++i) {
+                hstrategy.Update(vstrategy);
+                vstrategy.Update(hstrategy);
                 if (i % 100 == 0) {
                         EV = HeroEV(hstrategy,
                                     vstrategy,
