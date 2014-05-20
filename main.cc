@@ -92,6 +92,7 @@ public:
                 assert(nactions_ > 0 && nhands_ > 0);
                 probs_.assign(nhands_*nactions_,
                               1/static_cast<double>(nactions_));
+                ignore_masks_.assign(nhands_*nactions_, 0);
         }
 
         double Prob(const size_t& hand, const ActionType& type) const
@@ -100,16 +101,23 @@ public:
                 return probs_[hand*nactions_+type];
         }
 
+        void IgnoreAction(const size_t& hand, const ActionType& type)
+        {
+                assert(hand < nhands_ && type < nactions_);
+                ignore_masks_[hand*nactions_+type] |= 1 << type;
+        }
+
         void Update(const Strategy& opponent)
         {
                 vector<size_t> best(nactions_);
 
                 srand(time(0));
                 for (size_t h = 0; h < nhands_; ++h) {
-                        double bestEV = actions_[0]->EV(h, opponent, equity_);
+                        double bestEV = -1;
                         double nties = 0;
-                        best[0] = 0;
-                        for (size_t a = 1; a < nactions_; ++a) {
+                        for (size_t a = 0; a < nactions_; ++a) {
+                                if (ignore_masks_[h*nactions_+a] & (1<<a))
+                                        continue;
                                 double EV = actions_[a]->EV(h,opponent,equity_);
                                 if (EV == bestEV)
                                         best[++nties] = a;
@@ -154,6 +162,7 @@ private:
         const vector<Action *> actions_;
         const EquiLUT equity_;
         vector<double> probs_;
+        vector<char> ignore_masks_;
 };
 
 class VillOpenFold : public Action {
