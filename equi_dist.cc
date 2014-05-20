@@ -73,7 +73,7 @@ EquiDist::InitFlopOrTurn(const Range& hero,
 {
         boost::shared_ptr<PokerHandEvaluator> E(PokerHandEvaluator::alloc("h"));
         PokerEvaluation he, ve;
-        uint64_t all_mask = ~(0xffffffffffffffff<<CardSet::STANDARD_DECK_SIZE);
+        CardSet all;
 
         for (auto hit = hero.begin(); hit != hero.end(); ++hit) {
                 if (hit->intersects(init_board))
@@ -90,7 +90,7 @@ EquiDist::InitFlopOrTurn(const Range& hero,
                         double shares = 0;
                         size_t total = 0;
                         short N = static_cast<short>(5-init_board.size());
-                        CardSet all(all_mask);
+                        all.fill();
                         vector<Card> deck = all.remove(dead).cards();
                         combinations boards(deck.size(), N);
                         do {
