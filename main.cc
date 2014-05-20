@@ -521,6 +521,52 @@ HeroEV(const Strategy& hero,
         return N > 0 ? EV/N : -1;
 }
 
+double
+VillEV(const Strategy& hero,
+       const Strategy& vill,
+       const double& stack,
+       const double& blinds,
+       const double& raise,
+       const double& three_bet,
+       const double& four_bet)
+{
+        double EV = 0;
+        double N = 0;
+        const EquiLUT& equity = vill.LUT();
+
+        for (size_t v = 0; v < equity.NumRows(); ++v)
+                for (size_t h = 0; h < equity.NumCols(); ++h) {
+                        double EQ = equity.Val(v, h);
+                        if (EQ == -1)
+                                continue;
+                        ++N;
+                        double pot = blinds+2*raise;
+                        double bet = 2*pot/3;
+                        EV += vill.Prob(v, VILL_OPEN_FOLD)*stack;
+                        EV += vill.Prob(v, VILL_RAISE_FOLD)*(
+                                hero.Prob(h, HERO_FOLD)*(stack+blinds) +
+                                hero.Prob(h, HERO_FLAT_CALL)*(
+                                        stack-raise-bet+EQ*(pot+2*bet)) +
+                                (hero.Prob(h, HERO_3BET_FOLD) +
+                                 hero.Prob(h, HERO_5BET))*(stack-raise));
+                        EV += vill.Prob(v, VILL_4BET_FOLD)*(
+                                hero.Prob(h, HERO_FOLD)*(stack+blinds) +
+                                hero.Prob(h, HERO_FLAT_CALL)*(
+                                        stack-pot-raise+EQ*2*(pot+raise)) +
+                                hero.Prob(h, HERO_3BET_FOLD)*(
+                                        stack+blinds+three_bet) +
+                                hero.Prob(h, HERO_5BET)*(stack-four_bet));
+                        EV += vill.Prob(v, VILL_4BET_CALL)*(
+                                hero.Prob(h, HERO_FOLD)*(stack+blinds) +
+                                hero.Prob(h, HERO_FLAT_CALL)*(
+                                        stack-pot-raise+EQ*2*(pot+raise)) +
+                                hero.Prob(h, HERO_3BET_FOLD)*(
+                                        stack+blinds+three_bet) +
+                                hero.Prob(h, HERO_5BET)*EQ*(blinds+2*stack));
+                }
+        return N > 0 ? EV/N : -1;
+}
+
 struct Record {
         size_t hand;
         double prob;
@@ -583,9 +629,11 @@ using pokerstove::CardSet;
 int
 main(int argc, char *argv[])
 {
-        Range hero("22+,A2s+,K6s+,Q8s+,J8s+,T7s+,96s+,85s+,74s+,63s+,52s+,42s+,32s,A8o+,K9o+,QTo+,JTo");
-        Range vill("77+,A7s+,K9s+,QTs+,JTs,ATo+,KTo+,QJo");
-        CardSet board;
+        Range hero;
+        Range vill;
+        Range vill_open("77+,A7s+,K9s+,QTs+,JTs,ATo+,KTo+,QJo");
+        Range hero_call("22+,A2s+,K6s+,Q8s+,J8s+,T7s+,96s+,85s+,74s+,63s+,52s+,42s+,32s,A8o+,K9o+,QTo+,JTo");
+CardSet board;
         vector<CardSet> hhands;
         vector<CardSet> vhands;
         double stack = 100;
@@ -594,8 +642,8 @@ main(int argc, char *argv[])
         double three_bet = 9;
         double four_bet = 27;
 
-//        hero.Fill();
-//        vill.Fill();
+        hero.Fill();
+        vill.Fill();
         AddRange(hero, board, hhands);
         AddRange(vill, board, vhands);
         GTO::EquiDist ED(hero, vill, board);
@@ -620,25 +668,51 @@ main(int argc, char *argv[])
         Strategy hstrategy(hactions, hhands, vhands, ED);
         Strategy vstrategy(vactions, vhands, hhands, ED);
 
-        double EV = 0;
+        for (size_t v = 0; v < vhands.size(); ++v)
+                if (vill_open.IsMember(vhands[v]))
+                        vstrategy.IgnoreAction(v, VILL_OPEN_FOLD);
+                else {
+                        vstrategy.IgnoreAction(v, VILL_RAISE_FOLD);
+                        vstrategy.IgnoreAction(v, VILL_4BET_FOLD);
+                        vstrategy.IgnoreAction(v, VILL_4BET_CALL);
+                }
+
+        for (size_t h = 0; h < hhands.size(); ++h)
+                if (hero_call.IsMember(hhands[h]))
+                        hstrategy.IgnoreAction(h, HERO_FOLD);
+                else {
+                        hstrategy.IgnoreAction(h, HERO_FLAT_CALL);
+                        hstrategy.IgnoreAction(h, HERO_3BET_FOLD);
+                        hstrategy.IgnoreAction(h, HERO_5BET);
+                }
+
+        double hEV = 0;
+        double vEV = 0;
         for (size_t i = 0; i < 10000; ++i) {
                 hstrategy.Update(vstrategy);
                 vstrategy.Update(hstrategy);
                 if (i % 100 == 0) {
-                        EV = HeroEV(hstrategy,
-                                    vstrategy,
-                                    stack,
-                                    blinds,
-                                    raise,
-                                    three_bet,
-                                    four_bet);
+                        hEV = HeroEV(hstrategy,
+                                     vstrategy,
+                                     stack,
+                                     blinds,
+                                     raise,
+                                     three_bet,
+                                     four_bet);
+                        vEV = VillEV(hstrategy,
+                                     vstrategy,
+                                     stack,
+                                     blinds,
+                                     raise,
+                                     three_bet,
+                                     four_bet);
                         fprintf(stderr, "Iteration %d: EV(EP) = %.6f, \
-EV(BTN) = %.6f\n", i, blinds+2*stack-EV, EV);
+EV(BTN) = %.6f\n", i, vEV, hEV);
                 }
         }
-        printf("UTG: EV = %.4f\n", blinds+2*stack-EV);
+        printf("UTG: EV = %.4f\n", vEV);
         PrintResults(vhands, vstrategy, hstrategy, vactions);
-        printf("\nBTN: EV = %.4f\n", EV);
+        printf("\nBTN: EV = %.4f\n", hEV);
         PrintResults(hhands, hstrategy, vstrategy, hactions);
 
         return 0;
