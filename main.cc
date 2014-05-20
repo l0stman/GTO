@@ -211,9 +211,10 @@ public:
                                 continue;
                         ++N;
                         double pot = blinds_+2*raise_;
+                        double bet = 2*pot/3;
                         EV += hero.Prob(h, HERO_FOLD)*(stack_+blinds_) +
                                 hero.Prob(h, HERO_FLAT_CALL)*(
-                                        stack_-raise_-pot+EQ*2*(raise_+pot)) +
+                                        stack_-raise_-bet+EQ*(pot+2*bet)) +
                                 (hero.Prob(h, HERO_3BET_FOLD) +
                                  hero.Prob(h, HERO_5BET))*(stack_-raise_);
                 }
@@ -257,9 +258,10 @@ public:
                                 continue;
                         ++N;
                         double pot = blinds_+2*raise_;
+                        double bet = 2*pot/3;
                         EV += hero.Prob(h, HERO_FOLD)*(stack_+blinds_) +
                                 hero.Prob(h, HERO_FLAT_CALL) *
-                                (stack_-raise_-pot+EQ*2*(raise_+pot)) +
+                                (stack_-raise_-bet+EQ*(pot+2*bet)) +
                                 hero.Prob(h, HERO_3BET_FOLD) *
                                 (stack_+blinds_+three_bet_) +
                                 hero.Prob(h, HERO_5BET)*(stack_-four_bet_);
@@ -304,9 +306,10 @@ public:
                                 continue;
                         ++N;
                         double pot = blinds_+2*raise_;
+                        double bet = 2*pot/3;
                         EV += hero.Prob(h, HERO_FOLD)*(stack_+blinds_) +
                                 hero.Prob(h, HERO_FLAT_CALL) *
-                                (stack_-raise_-pot+EQ*2*(raise_+pot)) +
+                                (stack_-raise_-bet+EQ*(pot+2*bet)) +
                                 hero.Prob(h, HERO_3BET_FOLD) *
                                 (stack_ + blinds_ + three_bet_) +
                                 hero.Prob(h, HERO_5BET)*EQ*(blinds_ + 2*stack_);
@@ -368,10 +371,11 @@ public:
                         if (EQ == -1)
                                 continue;
                         double pot = blinds_+2*raise_;
+                        double bet = 2*pot/3;
                         double p = vill.Prob(v, VILL_OPEN_FOLD);
                         ++N;
                         EV += p*(stack_+blinds_) +
-                                (1-p)*(stack_-raise_-pot + EQ*2*(raise_+pot));
+                                (1-p)*(stack_-raise_-bet + EQ*(pot+2*bet));
                 }
                 return N > 0 ? EV/N : -1;
         }
@@ -492,9 +496,12 @@ HeroEV(const Strategy& hero,
                                 continue;
                         ++N;
                         double pot = blinds+2*raise;
+                        double bet = 2*pot/3;
                         EV += hero.Prob(h, HERO_FOLD)*stack;
                         EV += hero.Prob(h, HERO_FLAT_CALL)*(
-                                stack-pot-raise+EQ*2*(pot+raise));
+                                vill.Prob(v, VILL_OPEN_FOLD)*(stack+blinds) +
+                                (1-vill.Prob(v, VILL_OPEN_FOLD))*(
+                                        stack-raise-bet+EQ*(pot+2*bet)));
                         EV += hero.Prob(h, HERO_3BET_FOLD)*(
                                 vill.Prob(v, VILL_OPEN_FOLD)*(stack+blinds) +
                                 vill.Prob(v, VILL_RAISE_FOLD)*(
