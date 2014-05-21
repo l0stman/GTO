@@ -186,10 +186,10 @@ private:
 
 class VillRaiseFold : public Action {
 public:
-        VillRaiseFold(const string& name,
-                      const double& stack,
-                      const double& blinds,
-                      const double& raise)
+        explicit VillRaiseFold(const string& name,
+                               const double& stack,
+                               const double& blinds,
+                               const double& raise)
                 : name_(name),
                   stack_(stack),
                   blinds_(blinds),
@@ -229,12 +229,12 @@ private:
 
 class Vill4betFold : public Action {
 public:
-        Vill4betFold(const string& name,
-                     const double& stack,
-                     const double& blinds,
-                     const double& raise,
-                     const double& three_bet,
-                     const double& four_bet)
+        explicit Vill4betFold(const string& name,
+                              const double& stack,
+                              const double& blinds,
+                              const double& raise,
+                              const double& three_bet,
+                              const double& four_bet)
                 : name_(name),
                   stack_(stack),
                   blinds_(blinds),
@@ -279,11 +279,11 @@ private:
 
 class Vill4betCall : public Action {
 public:
-        Vill4betCall(const string& name,
-                     const double& stack,
-                     const double& blinds,
-                     const double& raise,
-                     const double& three_bet)
+        explicit Vill4betCall(const string& name,
+                              const double& stack,
+                              const double& blinds,
+                              const double& raise,
+                              const double& three_bet)
                 : name_(name),
                   stack_(stack),
                   blinds_(blinds),
@@ -326,10 +326,8 @@ private:
 
 class HeroFold : public Action {
 public:
-        HeroFold(const string& name,
-                 const double& stack)
-                : name_(name),
-                  stack_(stack)
+        explicit HeroFold(const string& name, const double& stack)
+                : name_(name), stack_(stack)
         {}
 
         string Name() const { return name_; }
@@ -347,10 +345,10 @@ private:
 
 class HeroFlatCall : public Action {
 public:
-        HeroFlatCall(const string& name,
-                     const double& stack,
-                     const double& blinds,
-                     const double& raise)
+        explicit HeroFlatCall(const string& name,
+                              const double& stack,
+                              const double& blinds,
+                              const double& raise)
                 : name_(name),
                   stack_(stack),
                   blinds_(blinds),
@@ -388,11 +386,11 @@ private:
 
 class Hero3betFold : public Action {
 public:
-        Hero3betFold(const string& name,
-                     const double& stack,
-                     const double& blinds,
-                     const double& raise,
-                     const double& three_bet)
+        explicit Hero3betFold(const string& name,
+                              const double& stack,
+                              const double& blinds,
+                              const double& raise,
+                              const double& three_bet)
                 : name_(name),
                   stack_(stack),
                   blinds_(blinds),
@@ -432,11 +430,11 @@ private:
 
 class Hero5bet : public Action {
 public:
-        Hero5bet(const string& name,
-                 const double& stack,
-                 const double& blinds,
-                 const double& raise,
-                 const double& four_bet)
+        explicit Hero5bet(const string& name,
+                          const double& stack,
+                          const double& blinds,
+                          const double& raise,
+                          const double& four_bet)
                 : name_(name),
                   stack_(stack),
                   blinds_(blinds),
@@ -572,9 +570,9 @@ struct Record {
         double prob;
         double EV;
 
-        Record(const size_t& hand,
-               const double& prob,
-               const double& EV)
+        explicit Record(const size_t& hand,
+                        const double& prob,
+                        const double& EV)
                 : hand(hand), prob(prob), EV(EV)
         {}
 
