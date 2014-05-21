@@ -277,12 +277,18 @@ Range::Range(const string& in)
                                 }
                                 break;
                         case 4:
-                                if (s[first+2] == 's' && s[first+3] == '+')
+                                if (!IsRank(s[first]))
+                                        FmtError(s.substr(first, len));
+                                if (s[first+2] == 's' && s[first+3] == '+' &&
+                                    IsRank(s[first+1]))
                                         AddSuitedPlus(s, first);
-                                else if (s[first+2] == 'o' && s[first+3] == '+')
+                                else if (s[first+2] == 'o' &&
+                                         s[first+3] =='+' &&
+                                         IsRank(s[first+1]))
                                         AddOffsuitPlus(s, first);
-                                else if (IsRank(s[first])&&IsRank(s[first+2])&&
-                                         IsSuit(s[first+1])&&IsSuit(s[first+3]))
+                                else if (IsRank(s[first+2]) &&
+                                         IsSuit(s[first+1]) &&
+                                         IsSuit(s[first+3]))
                                         range_.insert(
                                                 CardSet(s.substr(first, len)));
                                 else
