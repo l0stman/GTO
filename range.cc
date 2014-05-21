@@ -9,8 +9,8 @@
 namespace {
 using std::string;
 
-const string kRanks_ = "23456789TJQKA";
-const string kSuits_ = "cdhs";
+const string kRanks = "23456789TJQKA";
+const string kSuits = "cdhs";
 
 void
 FmtError(const string& s)
@@ -22,7 +22,7 @@ FmtError(const string& s)
 inline size_t
 GetRank(const char& c)
 {
-        return kRanks_.find(c);
+        return kRanks.find(c);
 }
 
 inline void
@@ -60,9 +60,9 @@ Range::AddSuited(const string& s, const size_t& pos)
 
         if (s[pos] == s[pos+1])
                 FmtError(s.substr(pos, 3));
-        for (size_t i = 0; i < kSuits_.length(); i++) {
-                h[1] = kSuits_[i];
-                h[3] = kSuits_[i];
+        for (size_t i = 0; i < kSuits.length(); i++) {
+                h[1] = kSuits[i];
+                h[3] = kSuits[i];
                 range_.insert(CardSet(h));
         }
 }
@@ -74,11 +74,11 @@ Range::AddOffsuit(const string& s, const size_t& pos)
         h[0] = s[pos];
         h[2] = s[pos+1];
 
-        for (size_t i = 0; i < kSuits_.length(); i++)
-                for (size_t j = 0; j < kSuits_.length(); j++)
+        for (size_t i = 0; i < kSuits.length(); i++)
+                for (size_t j = 0; j < kSuits.length(); j++)
                         if (i != j) {
-                                h[1] = kSuits_[i];
-                                h[3] = kSuits_[j];
+                                h[1] = kSuits[i];
+                                h[3] = kSuits[j];
                                 range_.insert(CardSet(h));
                         }
 }
@@ -91,12 +91,12 @@ Range::AddSuitedPlus(const string& s, const size_t& pos)
         size_t max = 0;
 
         ParseRanks(s, pos, min, max);
-        h[0] = kRanks_[max];
+        h[0] = kRanks[max];
         for (size_t i = min; i < max; ++i) {
-                h[2] = kRanks_[i];
-                for (size_t j = 0; j < kSuits_.length(); ++j) {
-                        h[1] = kSuits_[j];
-                        h[3] = kSuits_[j];
+                h[2] = kRanks[i];
+                for (size_t j = 0; j < kSuits.length(); ++j) {
+                        h[1] = kSuits[j];
+                        h[3] = kSuits[j];
                         range_.insert(CardSet(h));
                 }
         }
@@ -110,14 +110,14 @@ Range::AddOffsuitPlus(const string& s, const size_t& pos)
         size_t max = 0;
 
         ParseRanks(s, pos, min, max);
-        h[0] = kRanks_[max];
+        h[0] = kRanks[max];
         for (size_t i = min; i < max; ++i) {
-                h[2] = kRanks_[i];
-                for (size_t j = 0; j < kSuits_.length(); ++j)
-                        for (size_t k = 0; k < kSuits_.length(); ++k)
+                h[2] = kRanks[i];
+                for (size_t j = 0; j < kSuits.length(); ++j)
+                        for (size_t k = 0; k < kSuits.length(); ++k)
                                 if (j != k) {
-                                        h[1] = kSuits_[j];
-                                        h[3] = kSuits_[k];
+                                        h[1] = kSuits[j];
+                                        h[3] = kSuits[k];
                                         range_.insert(CardSet(h));
                                 }
         }
@@ -133,13 +133,13 @@ Range::AddSuitedRange(const string& s, const size_t& pos)
         ParseRanks(s, pos+4, min2, max2);
         if (max1 != max2)
                 FmtError(s.substr(pos, 7));
-        h[0] = kRanks_[max1];
+        h[0] = kRanks[max1];
         std::pair<size_t,size_t> p = std::minmax(min1, min2);
         for (size_t i = p.first; i<=p.second; ++i) {
-                h[2] = kRanks_[i];
-                for (size_t j = 0; j < kSuits_.length(); ++j) {
-                        h[1] = kSuits_[j];
-                        h[3] = kSuits_[j];
+                h[2] = kRanks[i];
+                for (size_t j = 0; j < kSuits.length(); ++j) {
+                        h[1] = kSuits[j];
+                        h[3] = kSuits[j];
                         range_.insert(CardSet(h));
                 }
         }
@@ -155,15 +155,15 @@ Range::AddOffsuitRange(const string& s, const size_t& pos)
         ParseRanks(s, pos+4, min2, max2);
         if (max1 != max2)
                 FmtError(s.substr(pos, 7));
-        h[0] = kRanks_[max1];
+        h[0] = kRanks[max1];
         std::pair<size_t,size_t> p = std::minmax(min1, min2);
         for (size_t i = p.first; i<=p.second; ++i) {
-                h[2] = kRanks_[i];
-                for (size_t j = 0; j < kSuits_.length(); ++j)
-                        for (size_t k = 0; k < kSuits_.length(); ++k)
+                h[2] = kRanks[i];
+                for (size_t j = 0; j < kSuits.length(); ++j)
+                        for (size_t k = 0; k < kSuits.length(); ++k)
                                 if (j != k) {
-                                        h[1] = kSuits_[j];
-                                        h[3] = kSuits_[k];
+                                        h[1] = kSuits[j];
+                                        h[3] = kSuits[k];
                                         range_.insert(CardSet(h));
                                 }
         }
@@ -177,8 +177,8 @@ Range::AddPairsRange(const string& s, const size_t& pos)
                 GetRank(s[pos]), GetRank(s[pos+3]));
 
         for (size_t i = p.first; i <= p.second; i++) {
-                h[0] = kRanks_[i];
-                h[1] = kRanks_[i];
+                h[0] = kRanks[i];
+                h[1] = kRanks[i];
                 AddOffsuit(h, 0);
         }
 }
@@ -190,8 +190,8 @@ Range::AddPairsPlus(const string& s, const size_t& pos)
         size_t r = GetRank('A');
 
         for (size_t i = GetRank(s[pos]); i<=r; ++i) {
-                h[0] = kRanks_[i];
-                h[1] = kRanks_[i];
+                h[0] = kRanks[i];
+                h[1] = kRanks[i];
                 AddOffsuit(h, 0);
         }
 }
@@ -210,11 +210,11 @@ Range::AddSingleSuitRange(const string& s, const size_t& pos)
 
         if (max != std::max(r3, r4))
                 FmtError(s.substr(pos, 9));
-        h[0] = kRanks_[max];
+        h[0] = kRanks[max];
         h[1] = s[1];
         h[3] = s[1];
         for (size_t i = p.first; i<=p.second; ++i) {
-                h[2] = kRanks_[i];
+                h[2] = kRanks[i];
                 range_.insert(h);
         }
 }
@@ -226,11 +226,11 @@ Range::AddSingleSuitPlus(const string& s, const size_t& pos)
         std::pair<size_t,size_t> p = std::minmax(
                 GetRank(s[pos]), GetRank(s[pos+2]));
 
-        h[0] = kRanks_[p.second];
+        h[0] = kRanks[p.second];
         h[1] = s[pos+1];
         h[3] = s[pos+1];
         for (size_t i = p.first; i < p.second; ++i) {
-                h[2] = kRanks_[i];
+                h[2] = kRanks[i];
                 range_.insert(h);
         }
 }
@@ -368,15 +368,15 @@ Range::Fill()
         string c1(2, 'x');
         string c2(2, 'x');
 
-        for (size_t r1 = 0; r1 < kRanks_.length(); r1++)
-                for (size_t s1 = 0; s1 < kSuits_.length(); s1++) {
-                        c1[0] = kRanks_[r1];
-                        c1[1] = kSuits_[s1];
-                        for (size_t r2 = 0; r2 < kRanks_.length(); r2++)
-                                for (size_t s2 = 0; s2<kSuits_.length(); s2++) {
+        for (size_t r1 = 0; r1 < kRanks.length(); r1++)
+                for (size_t s1 = 0; s1 < kSuits.length(); s1++) {
+                        c1[0] = kRanks[r1];
+                        c1[1] = kSuits[s1];
+                        for (size_t r2 = 0; r2 < kRanks.length(); r2++)
+                                for (size_t s2 = 0; s2<kSuits.length(); s2++) {
                                         CardSet hand(c1);
-                                        c2[0] = kRanks_[r2];
-                                        c2[1] = kSuits_[s2];
+                                        c2[0] = kRanks[r2];
+                                        c2[1] = kSuits[s2];
                                         CardSet C(c2);
 
                                         if (hand.disjoint(C)) {
