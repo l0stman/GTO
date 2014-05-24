@@ -246,7 +246,7 @@ Range::Range(const string& in)
                         s[pos++] = s[i];
         size_t first = 0;
         for (size_t last = 0; last <= pos; last++)
-                if ((s[last] == ',' || last == pos) && first < last) {
+                if ((last == pos || s[last] == ',') && first < last) {
                         size_t len = last-first;
                         switch (len) {
                         case 2:
