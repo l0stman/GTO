@@ -1,7 +1,8 @@
 #include <algorithm>
-#include <cstdio>
 #include <cassert>
+#include <cstdio>
 #include <cstdlib>
+#include <ctime>
 #include <vector>
 
 #include "range.h"
