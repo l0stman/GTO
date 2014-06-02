@@ -17,7 +17,7 @@
 (defpackage :cfr
   (:use :cl)
   (:export :player :hero :villain :nobody :node :average-strategy :utility :cfr
-   :make-node :name :children :leafp :infoset :active-player))
+   :make-node :make-leaf :name :children :leafp :infoset :active-player))
 
 (defpackage :gto
   (:use :cl))
