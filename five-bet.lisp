@@ -1,77 +1,76 @@
 (in-package :gto)
 
 (defun make-root (stack blinds raise three-bet four-bet utg-hands btn-hands)
-  (labels ((err (player name)
-             (error "Don't have utility for ~S at ~A." player name))
-           (4bet-fold-util (player pid oid)
-             (declare (ignore pid oid))
-             (case player
-               (cfr:villain (- stack four-bet))
-               (cfr:hero (+ stack four-bet blinds))
-               (t (err player "4-bet bluff"))))
-           (4bet-call-util (player pid oid)
-             (case player
-               (cfr:villain (* (equity:value (aref utg-hands pid)
-                                             (aref btn-hands oid))
-                               (+ blinds (* 2 stack))))
-               (cfr:hero (* (equity:value (aref btn-hands pid)
-                                          (aref utg-hands oid))
-                            (+ blinds (* 2 stack))))
-               (t (err player "4-bet call"))))
-           (3bet-fold-util (player pid oid)
-             (declare (ignore pid oid))
-             (case player
-               (cfr:villain (+ stack blinds three-bet))
-               (cfr:hero (- stack three-bet))
-               (t (err player "3-bet bluff"))))
-           (raise-fold-util (player pid oid)
-             (declare (ignore pid oid))
-             (case player
-               (cfr:villain (- stack raise))
-               (cfr:hero (+ stack blinds raise))
-               (t (err player "Open raise bluff"))))
-           (flat-util (player pid oid)
-             (let* ((pot (+ blinds (* 2 raise)))
-                    (bet (/ (* 2 pot) 3)))
+  (let ((lut (make-array (list (length utg-hands) (length btn-hands))
+                         :element-type 'double-float)))
+    (dotimes (v (length utg-hands))
+      (dotimes (h (length btn-hands))
+        (setf (aref lut v h)
+              (coerce (equity:value (aref utg-hands v) (aref btn-hands h))
+                      'double-float))))
+    (labels ((err (player name)
+               (error "Don't have utility for ~S at ~A." player name))
+             (4bet-fold-util (player pid oid)
+               (declare (ignore pid oid))
                (case player
-                 (cfr:villain (+ (- stack raise bet)
-                                 (* (equity:value (aref utg-hands pid)
-                                                  (aref btn-hands oid))
-                                    (+ pot (* 2 bet)))))
-                 (cfr:hero (+ (- stack raise bet)
-                              (* (equity:value (aref btn-hands pid)
-                                               (aref utg-hands oid))
-                                 (+ pot (* 2 bet)))))
-                 (t (err player "Flat call")))))
-           (fold-util (player pid oid)
-             (declare (ignore pid oid))
-             (case player
-               (cfr:villain (+ stack blinds))
-               (cfr:hero stack)
-               (t (err player "Fold")))))
-    (let* ((4bet-fold (cfr:make-leaf "4-bet bluff" #'4bet-fold-util))
-           (4bet-call (cfr:make-leaf  "4-bet call" #'4bet-call-util))
-           (5bet (cfr:make-node "5-bet"
-                                'cfr:villain
-                                (length utg-hands)
-                                (vector 4bet-fold 4bet-call)))
-           (3bet-fold (cfr:make-leaf "3-bet bluff" #'3bet-fold-util))
-           (4bet (cfr:make-node "4-bet"
-                                'cfr:hero
-                                (length btn-hands)
-                                (vector 3bet-fold 5bet)))
-           (raise-fold (cfr:make-leaf "Open raise bluff" #'raise-fold-util))
-           (3bet (cfr:make-node "3-bet"
-                                'cfr:villain
-                                (length utg-hands)
-                                (vector raise-fold 4bet)))
-           (flat (cfr:make-leaf "Flat call" #'flat-util))
-           (fold (cfr:make-leaf "Fold" #'fold-util))
-           (root (cfr:make-node "Root"
-                                'cfr:hero
-                                (length btn-hands)
-                                (vector fold flat 3bet))))
-      root)))
+                 (cfr:villain (- stack four-bet))
+                 (cfr:hero (+ stack four-bet blinds))
+                 (t (err player "4-bet bluff"))))
+             (4bet-call-util (player pid oid)
+               (case player
+                 (cfr:villain (* (aref lut pid oid) (+ blinds (* 2 stack))))
+                 (cfr:hero (* (- 1 (aref lut oid pid)) (+ blinds (* 2 stack))))
+                 (t (err player "4-bet call"))))
+             (3bet-fold-util (player pid oid)
+               (declare (ignore pid oid))
+               (case player
+                 (cfr:villain (+ stack blinds three-bet))
+                 (cfr:hero (- stack three-bet))
+                 (t (err player "3-bet bluff"))))
+             (raise-fold-util (player pid oid)
+               (declare (ignore pid oid))
+               (case player
+                 (cfr:villain (- stack raise))
+                 (cfr:hero (+ stack blinds raise))
+                 (t (err player "Open raise bluff"))))
+             (flat-util (player pid oid)
+               (let* ((pot (+ blinds (* 2 raise)))
+                      (bet (/ (* 2 pot) 3)))
+                 (case player
+                   (cfr:villain (+ (- stack raise bet)
+                                   (* (aref lut pid oid) (+ pot (* 2 bet)))))
+                   (cfr:hero (+ (- stack raise bet)
+                                (* (- 1 (aref lut oid pid)) (+ pot (* 2 bet)))))
+                   (t (err player "Flat call")))))
+             (fold-util (player pid oid)
+               (declare (ignore pid oid))
+               (case player
+                 (cfr:villain (+ stack blinds))
+                 (cfr:hero stack)
+                 (t (err player "Fold")))))
+      (let* ((4bet-fold (cfr:make-leaf "4-bet bluff" #'4bet-fold-util))
+             (4bet-call (cfr:make-leaf  "4-bet call" #'4bet-call-util))
+             (5bet (cfr:make-node "5-bet"
+                                  'cfr:villain
+                                  (length utg-hands)
+                                  (vector 4bet-fold 4bet-call)))
+             (3bet-fold (cfr:make-leaf "3-bet bluff" #'3bet-fold-util))
+             (4bet (cfr:make-node "4-bet"
+                                  'cfr:hero
+                                  (length btn-hands)
+                                  (vector 3bet-fold 5bet)))
+             (raise-fold (cfr:make-leaf "Open raise bluff" #'raise-fold-util))
+             (3bet (cfr:make-node "3-bet"
+                                  'cfr:villain
+                                  (length utg-hands)
+                                  (vector raise-fold 4bet)))
+             (flat (cfr:make-leaf "Flat call" #'flat-util))
+             (fold (cfr:make-leaf "Fold" #'fold-util))
+             (root (cfr:make-node "Root"
+                                  'cfr:hero
+                                  (length btn-hands)
+                                  (vector fold flat 3bet))))
+        root))))
 
 (defun print-tree (root hutil vutil hhands vhands)
   (labels ((iter (node player hands)
@@ -213,12 +212,18 @@
 
 (defun make-dealer (hhands vhands)
   (let ((hid (sample-id hhands))
-        (vid (sample-id vhands)))
+        (vid (sample-id vhands))
+        (lut (make-array (list (length hhands) (length vhands))
+                         :element-type 'fixnum)))
+    (dotimes (h (length hhands))
+      (dotimes (v (length vhands))
+        (setf (aref lut h v)
+              (equity:matchup-combo (aref hhands h) (aref vhands v)))))
     (lambda ()
       (loop
         (let* ((h (funcall hid))
                (v (funcall vid))
-               (m (equity:matchup-combo (aref hhands h) (aref vhands v)))
+               (m (aref lut h v))
                (s (suit-combo (aref vhands v))))
           (when (or (= m s) (< (random s) m)) ; no conflict
             (return (values h v))))))))
