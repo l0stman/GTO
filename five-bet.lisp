@@ -1,152 +1,77 @@
 (in-package :gto)
 
-(defstruct (infoset (:copier NIL))
-  "Information set for a given node."
-  (stack 0.0d0 :type double-float :read-only t)
-  (blinds 0.0d0 :type double-float :read-only t)
-  (raise 0.0d0 :type double-float :read-only t)
-  (three-bet 0.0d0 :type double-float :read-only t)
-  (four-bet 0.0d0 :type double-float :read-only t)
-  (utg-hands #() :type (simple-array simple-string) :read-only t)
-  (btn-hands #() :type (simple-array simple-string) :read-only t))
-
-(defclass root (cfr:node) ())
-(defclass utg-open-raise (cfr:node) ())
-(defclass btn-fold (cfr:node) ())
-(defclass btn-flat-call (cfr:node) ())
-(defclass btn-3bet (cfr:node) ())
-(defclass utg-raise-fold (cfr:node) ())
-(defclass utg-4bet (cfr:node) ())
-(defclass btn-3bet-fold (cfr:node) ())
-(defclass btn-5bet (cfr:node) ())
-(defclass utg-4bet-fold (cfr:node) ())
-(defclass utg-4bet-call (cfr:node) ())
-
-(defun make-root (stack
-                  blinds
-                  raise
-                  three-bet
-                  four-bet
-                  utg-hands
-                  btn-hands)
-  (labels ((check-floats (args)
-             (unless (null args)
-               (destructuring-bind (name obj &rest rest) args
-                 (unless (or (null obj)
-                             (and (typep obj 'double-float) (plusp obj)))
-                   (error "~A should be a positive double-float, not ~S."
-                          name obj))
-                 (check-floats rest))))
-           (make-leaf (class name infoset)
-             (make-instance class
-                            :name name
-                            :active-player 'cfr:nobody
-                            :infoset infoset))
-           (make-node (class name player num-states children)
-             (make-instance class
-                            :name name
-                            :active-player player
-                            :num-states num-states
-                            :children children)))
-    (check-floats (list "STACK" stack
-                        "FOUR-BET" four-bet
-                        "BLINDS" blinds
-                        "THREE-BET" three-bet
-                        "FOUR-BET" four-bet
-                        "RAISE" raise))
-    (let* ((info (make-infoset :stack stack
-                               :raise raise
-                               :three-bet three-bet
-                               :four-bet four-bet
-                               :utg-hands utg-hands
-                               :btn-hands btn-hands))
-           (4bet-fold (make-leaf 'utg-4bet-fold "4-bet bluff" info))
-           (4bet-call (make-leaf 'utg-4bet-call "4-bet call"  info))
-           (5bet (make-node 'btn-5bet
-                            "5-bet"
-                            'cfr:villain
-                            (length utg-hands)
-                            (vector 4bet-fold 4bet-call)))
-           (3bet-fold (make-leaf 'btn-3bet-fold "3-bet bluff" info))
-           (4bet (make-node 'utg-4bet
-                            "4-bet"
-                            'cfr:hero
-                            (length btn-hands)
-                            (vector 3bet-fold 5bet)))
-           (raise-fold (make-leaf 'utg-raise-fold "Open raise bluff" info))
-           (3bet (make-node 'btn-3bet
-                            "3-bet"
-                            'cfr:villain
-                            (length utg-hands)
-                            (vector raise-fold 4bet)))
-           (flat (make-leaf 'btn-flat-call "Flat call" info))
-           (fold (make-leaf 'btn-fold "Fold" info))
-           (root (make-node 'root
-                            "Root"
-                            'cfr:hero
-                            (length btn-hands)
-                            (vector fold flat 3bet))))
+(defun make-root (stack blinds raise three-bet four-bet utg-hands btn-hands)
+  (labels ((err (player name)
+             (error "Don't have utility for ~S at ~A." player name))
+           (4bet-fold-util (player pid oid)
+             (declare (ignore pid oid))
+             (case player
+               (cfr:villain (- stack four-bet))
+               (cfr:hero (+ stack four-bet blinds))
+               (t (err player "4-bet bluff"))))
+           (4bet-call-util (player pid oid)
+             (case player
+               (cfr:villain (* (equity:value (aref utg-hands pid)
+                                             (aref btn-hands oid))
+                               (+ blinds (* 2 stack))))
+               (cfr:hero (* (equity:value (aref btn-hands pid)
+                                          (aref utg-hands oid))
+                            (+ blinds (* 2 stack))))
+               (t (err player "4-bet call"))))
+           (3bet-fold-util (player pid oid)
+             (declare (ignore pid oid))
+             (case player
+               (cfr:villain (+ stack blinds three-bet))
+               (cfr:hero (- stack three-bet))
+               (t (err player "3-bet bluff"))))
+           (raise-fold-util (player pid oid)
+             (declare (ignore pid oid))
+             (case player
+               (cfr:villain (- stack raise))
+               (cfr:hero (+ stack blinds raise))
+               (t (err player "Open raise bluff"))))
+           (flat-util (player pid oid)
+             (let* ((pot (+ blinds (* 2 raise)))
+                    (bet (/ (* 2 pot) 3)))
+               (case player
+                 (cfr:villain (+ (- stack raise bet)
+                                 (* (equity:value (aref utg-hands pid)
+                                                  (aref btn-hands oid))
+                                    (+ pot (* 2 bet)))))
+                 (cfr:hero (+ (- stack raise bet)
+                              (* (equity:value (aref btn-hands pid)
+                                               (aref utg-hands oid))
+                                 (+ pot (* 2 bet)))))
+                 (t (err player "Flat call")))))
+           (fold-util (player pid oid)
+             (declare (ignore pid oid))
+             (case player
+               (cfr:villain (+ stack blinds))
+               (cfr:hero stack)
+               (t (err player "Fold")))))
+    (let* ((4bet-fold (cfr:make-leaf "4-bet bluff" #'4bet-fold-util))
+           (4bet-call (cfr:make-leaf  "4-bet call" #'4bet-call-util))
+           (5bet (cfr:make-node "5-bet"
+                                'cfr:villain
+                                (length utg-hands)
+                                (vector 4bet-fold 4bet-call)))
+           (3bet-fold (cfr:make-leaf "3-bet bluff" #'3bet-fold-util))
+           (4bet (cfr:make-node "4-bet"
+                                'cfr:hero
+                                (length btn-hands)
+                                (vector 3bet-fold 5bet)))
+           (raise-fold (cfr:make-leaf "Open raise bluff" #'raise-fold-util))
+           (3bet (cfr:make-node "3-bet"
+                                'cfr:villain
+                                (length utg-hands)
+                                (vector raise-fold 4bet)))
+           (flat (cfr:make-leaf "Flat call" #'flat-util))
+           (fold (cfr:make-leaf "Fold" #'fold-util))
+           (root (cfr:make-node "Root"
+                                'cfr:hero
+                                (length btn-hands)
+                                (vector fold flat 3bet))))
       root)))
-
-(defmethod cfr:utility ((n btn-fold) player pid oid)
-  (declare (ignore pid oid))
-  (with-slots ((i cfr:infoset) (name cfr:name)) n
-    (case player
-      (cfr:villain (+ (infoset-stack i) (infoset-blinds i)))
-      (cfr:hero (infoset-stack i))
-      (t (error "Don't have utility for ~S at ~A." player name)))))
-
-(defmethod cfr:utility ((n btn-flat-call) player pid oid)
-  (with-slots ((i cfr:infoset) (name cfr:name)) n
-    (let* ((pot (+ (infoset-blinds i) (* 2 (infoset-raise i))))
-           (bet (/ (* 2 pot) 3)))
-      (case player
-        (cfr:villain (+ (- (infoset-stack i) (infoset-raise i) bet)
-                        (* (equity:value (aref (infoset-utg-hands i) pid)
-                                         (aref (infoset-btn-hands i) oid))
-                           (+ pot (* 2 bet)))))
-        (cfr:hero (+ (- (infoset-stack i) (infoset-raise i) bet)
-                     (* (equity:value (aref (infoset-btn-hands i) pid)
-                                      (aref (infoset-utg-hands i) oid))
-                        (+ pot (* 2 bet)))))
-        (t (error "Don't have utility for ~S at ~A." player name))))))
-
-(defmethod cfr:utility ((n utg-raise-fold) player pid oid)
-  (declare (ignore pid oid))
-  (with-slots ((i cfr:infoset) (name cfr:name)) n
-    (case player
-      (cfr:villain (- (infoset-stack i) (infoset-raise i)))
-      (cfr:hero (+ (infoset-stack i) (infoset-blinds i) (infoset-raise i)))
-      (t (error "Don't have utility for ~S at ~A." player name)))))
-
-(defmethod cfr:utility ((n btn-3bet-fold) player pid oid)
-  (declare (ignore pid oid))
-  (with-slots ((i cfr:infoset) (name cfr:name)) n
-    (case player
-      (cfr:villain (+ (infoset-stack i)
-                      (infoset-blinds i)
-                      (infoset-three-bet i)))
-      (cfr:hero (- (infoset-stack i) (infoset-three-bet i)))
-      (t (error "Don't have utility for ~S at ~A." player name)))))
-
-(defmethod cfr:utility ((n utg-4bet-fold) player pid oid)
-  (declare (ignore pid oid))
-  (with-slots ((i cfr:infoset) (name cfr:name)) n
-    (case player
-      (cfr:villain (- (infoset-stack i) (infoset-four-bet i)))
-      (cfr:hero (+ (infoset-stack i) (infoset-four-bet i) (infoset-blinds i)))
-      (t (error "Don't have utility for ~S at ~A." player name)))))
-
-(defmethod cfr:utility ((n utg-4bet-call) player pid oid)
-  (with-slots ((i cfr:infoset) (name cfr:name)) n
-    (case player
-      (cfr:villain (* (equity:value (aref (infoset-utg-hands i) pid)
-                                    (aref (infoset-btn-hands i) oid))
-                      (+ (infoset-blinds i) (* 2 (infoset-stack i)))))
-      (cfr:hero (* (equity:value (aref (infoset-btn-hands i) pid)
-                                 (aref (infoset-utg-hands i) oid))
-                   (+ (infoset-blinds i) (* 2 (infoset-stack i)))))
-      (t (error "Don't have utility for ~S at ~A." player name)))))
 
 (defun print-tree (root hutil vutil hhands vhands)
   (labels ((iter (node player hands)
@@ -302,7 +227,7 @@
   (let* ((vhands (range-to-array
                   (range:new "77+,A7s+,K9s+,QTs+,JTs,ATo+,KTo+,QJo")))
          (hhands (range-to-array (range:fill (range:new))))
-         (root (make-root 75d0 1.5d0 3d0 9d0 27d0 vhands hhands))
+         (root (make-root 100d0 1.5d0 3d0 9d0 27d0 vhands hhands))
          (dealer (make-dealer hhands vhands))
          (hutil 0d0)
          (vutil 0d0))
