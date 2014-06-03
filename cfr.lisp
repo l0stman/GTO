@@ -85,7 +85,7 @@ corresponds to the state id of the active player and the second one to
 the action taken at the node."
   (check-type node node)
   (let ((strategy-sum (strategy-sum node)))
-    (unless (eq strategy-sum +empty-children+)
+    (unless (eq strategy-sum +empty-double-array+)
       (let* ((dims (array-dimensions strategy-sum))
              (avg (make-double-array dims)))
         (destructuring-bind (nstates nactions) dims
