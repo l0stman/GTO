@@ -203,7 +203,7 @@
   (let ((weights (make-array (length hands) :element-type 'single-float))
         (total 0.0))
     (dotimes (i (length hands))
-      (incf total (suit-combo (aref hands 1)))
+      (incf total (suit-combo (aref hands i)))
       (setf (aref weights i) total))
     (when (plusp total)
       (dotimes (i (length weights))
