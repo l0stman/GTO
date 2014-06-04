@@ -238,15 +238,41 @@
             (when (or (= m s) (< (random s) m)) ; no conflict
               (return (values h v)))))))))
 
-(defun train (&key (niter 1000000) (print-tree-p NIL) (verbosep T))
-  (let* ((vhands (range-to-array
-                  (range:new "77+,A7s+,K9s+,QTs+,JTs,ATo+,KTo+,QJo")))
+(defun train (&key (num-iter 1000000)
+                   (print-tree-p NIL)
+                   (verbosep T)
+                   (utg-range "77+,A7s+,K9s+,QTs+,JTs,ATo+,KTo+,QJo")
+                   (stack 100.0d0)
+                   (raise 3.0d0)
+                   (three-bet 9.0d0)
+                   (four-bet 27.0d0))
+  "Return the GTO strategies between an UTG player and the BTN.  We
+suppose that the blinds always get out of the way.  NUM-ITER is the
+number of iterations of the simulation -- the higher this number is
+the more accurate the result will be.  If PRINT-TREE-P is true, then
+print the result as a tree. Set VERBOSEP to NIL to keep the simulation
+quiet.
+
+The UTG player open raises to RAISE while holding a hand in UTG-RANGE.
+The BTN player then have the choice to fold, to flat call or to 3-bet.
+If he folds the UTG player wins the blinds.  If he flat calls, he will
+call another continuation bet equal to 2/3 the pot on the flop.  If he
+3-bet to THREE-BET, then the UTG player can fold or 4-bet to FOUR-BET.
+The button then can fold or 5-bet all-in. And the UTG player can fold
+or call the all-in bet."
+  (check-type num-iter (integer 1))
+  (check-type utg-range simple-string)
+  (check-type stack double-float)
+  (check-type raise double-float)
+  (check-type three-bet double-float)
+  (check-type four-bet double-float)
+  (let* ((vhands (range-to-array (range:new utg-range)))
          (hhands (range-to-array (range:fill (range:new))))
-         (root (make-root 100d0 1.5d0 3d0 9d0 27d0 vhands hhands))
+         (root (make-root stack 1.5d0 raise three-bet four-bet vhands hhands))
          (dealer (make-dealer hhands vhands))
          (hutil 0d0)
          (vutil 0d0))
-    (dotimes (i niter)
+    (dotimes (i num-iter)
       (multiple-value-bind (hid vid) (funcall dealer)
         (incf hutil (cfr:cfr root
                              'cfr:hero
@@ -267,4 +293,4 @@
                 (/ hutil (1+ i)))
         (force-output)))
     (let ((fn (if print-tree-p #'print-tree #'print-flat)))
-     (funcall fn root (/ hutil niter) (/ vutil niter) hhands vhands))))
+      (funcall fn root (/ hutil num-iter) (/ vutil num-iter) hhands vhands))))

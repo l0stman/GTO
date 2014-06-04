@@ -42,5 +42,6 @@
            #:active-player))
 
 (defpackage #:gto
-  (:use :cl))
+  (:use :cl)
+  (:export #:train))
 
