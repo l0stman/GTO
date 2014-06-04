@@ -274,18 +274,9 @@ or call the all-in bet."
          (vutil 0d0))
     (dotimes (i num-iter)
       (multiple-value-bind (hid vid) (funcall dealer)
-        (incf hutil (cfr:cfr root
-                             'cfr:hero
-                             1d0
-                             1d0
-                             hid
-                             vid)))
+        (incf hutil (cfr:cfr root 'cfr:hero 1d0 1d0 hid vid)))
       (multiple-value-bind (hid vid) (funcall dealer)
-        (incf vutil (cfr:cfr root 'cfr:villain
-                             1d0
-                             1d0
-                             vid
-                             hid)))
+        (incf vutil (cfr:cfr root 'cfr:villain 1d0 1d0 vid hid)))
       (when (and verbosep (zerop (mod i 100000)))
         (format t "~D UTG: ~,8F BTN: ~,8F~%"
                 i
