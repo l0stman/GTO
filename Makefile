@@ -1,15 +1,20 @@
 CC		= clang++ -std=c++11
-#CXXFLAGS	= -O0 -Wall -pedantic -g3
-CXXFLAGS	= -O3 -Wall -pedantic -DNDEBUG
+CXXFLAGS	= -O3 -Wall -pedantic -DNDEBUG			# Production use
+#CXXFLAGS	= -O0 -Wall -pedantic -g3			# Debug mode
+#CXXFLAGS	= -O3 -Wall -pedantic -DNDEBUG -g3		# Profiling mode
 PREF		= ${HOME}/hacks/poker/pokerstove/src
-LDFLAGS		= -static $(PREF)/build/lib/pokerstove/peval/libpeval.a
+LIBDIRS		= -L /usr/local/lib -L $(PREF)/build/lib/pokerstove/peval
+#PERFTOOLS_LIBS = -lprofiler	# Uncomment for profiling mode.
+STATIC_LIBS	= -lpeval
+DYNAM_LIBS	= $(PERFTOOLS_LIBS)
+LDFLAGS		= -Wl,-Bstatic $(STATIC_LIBS) -Wl,-Bdynamic $(DYNAM_LIBS)
 
 INCLUDES	= -I /usr/local/include -I $(PREF)/lib
 OBJS		= main.o range.o equi_dist.o
 PROGNAME	= 5bet
 
 $(PROGNAME) : $(OBJS)
-	$(CC) -o $(.TARGET) $(.ALLSRC) $(LDFLAGS)
+	$(CC) $(LIBDIRS) -o $(.TARGET) $(.ALLSRC) $(LDFLAGS)
 
 .SUFFIXES : .o .cc
 .cc.o :
