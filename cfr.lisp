@@ -90,9 +90,9 @@ the action taken at the node."
              (avg (make-double-array dims)))
         (destructuring-bind (nstates nactions) dims
           (dotimes (s nstates)
-            (dotimes (a nactions)
-              (let ((norm (loop for a below nactions sum
-                                   (aref strategy-sum s a))))
+            (let  ((norm (loop for a below nactions sum
+                                  (aref strategy-sum s a))))
+              (dotimes (a nactions)
                 (setf (aref avg s a)
                       (if (plusp norm)
                           (/ (aref strategy-sum s a) norm)
