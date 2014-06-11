@@ -27,8 +27,8 @@ public:
         virtual void Remove(const CardSet& hand);
         virtual void Fill();
 
-        string str() const;
-        size_t size() const { return range_.size();};
+        string Str() const;
+        size_t Size() const { return range_.size();};
 
         struct CSCmp {
                 bool

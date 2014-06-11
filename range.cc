@@ -394,7 +394,7 @@ Range::Fill()
 }
 
 string
-Range::str() const
+Range::Str() const
 {
         string s;
         std::set<CardSet,CSCmp> r(range_.begin(), range_.end());
