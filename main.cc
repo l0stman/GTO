@@ -1,718 +1,435 @@
-#include <algorithm>
-#include <cassert>
-#include <cstdio>
+#include "cfr.h"
+
 #include <cstdlib>
 #include <ctime>
+
+#include <algorithm>
 #include <vector>
 
-#include "range.h"
 #include "equi_dist.h"
+#include "range.h"
 
 namespace {
 using std::vector;
 using pokerstove::CardSet;
 using std::string;
 
-void
-AddRange(const GTO::Range& r, const CardSet& board, vector<CardSet>& hands)
+inline size_t
+RandInt(const size_t& n)
 {
+        return static_cast<size_t>(rand()/(RAND_MAX+1.0)*n);
+}
+
+vector<CardSet>
+RangeToVector(const GTO::Range& r, const CardSet& board)
+{
+        vector<CardSet> hands;
+        hands.reserve(r.Size());
         for (auto it = r.begin(); it != r.end(); it++)
                 if (board.disjoint(*it))
                         hands.push_back(*it);
+        return hands;
 }
 
-class EquiLUT {
-public:
-        explicit EquiLUT(const vector<CardSet>& hero,
-                         const vector<CardSet>& vill,
-                         const GTO::EquiDist& ED)
-                : hsize_(hero.size()), vsize_(vill.size())
-        {
-                equity_.reserve(hsize_*vsize_);
-                for (size_t i = 0; i < hsize_; ++i)
-                        for (size_t j = 0; j < vsize_; ++j) {
-                                size_t idx = i*vsize_+j;
-                                double EQ = ED.Equity(hero[i], vill[j]);
-                                if (EQ == -1) {
-                                        EQ = ED.Equity(vill[j], hero[i]);
-                                        if (EQ >= 0)
-                                                EQ = 1-EQ;
-                                }
-                                equity_[idx] = EQ;
-                        }
-        }
+struct GameInfo {
+        const double stack;
+        const double pot;
+        const double raise;
+        const vector<CardSet> vill_hands;
+        const vector<CardSet> hero_hands;
+        GTO::Array equity;
 
-        size_t NumRows() const { return hsize_; }
-        size_t NumCols() const { return vsize_; }
-
-        double Val(size_t hero, size_t vill) const
-        {
-                assert(hero < hsize_ && vill < vsize_);
-                return equity_[hero*vsize_+vill];
-        }
-
-private:
-        const double hsize_;
-        const double vsize_;
-        vector<double> equity_;
-};
-
-enum ActionType {
-        VILL_OPEN_FOLD = 0,
-        VILL_RAISE_FOLD,
-        VILL_4BET_FOLD,
-        VILL_4BET_CALL,
-        HERO_FOLD = 0,
-        HERO_FLAT_CALL,
-        HERO_3BET_FOLD,
-        HERO_5BET,
-};
-
-class Strategy;
-
-class Action {
-public:
-        virtual string Name() const = 0;
-        virtual double EV(const size_t& hand,
-                          const Strategy& opponent,
-                          const EquiLUT& equity) const = 0;
-};
-
-class Strategy {
-public:
-        explicit Strategy(const vector<Action *>& hero_actions,
-                          const vector<CardSet>& hero_hands,
-                          const vector<CardSet>& vill_hands,
-                          const GTO::EquiDist& ED)
-                : nhands_(hero_hands.size()),
-                  nactions_(hero_actions.size()),
-                  nsamples_(nactions_),
-                  actions_(vector<Action *>(hero_actions)),
-                  equity_(EquiLUT(hero_hands, vill_hands, ED))
-        {
-                assert(nactions_ > 0 && nhands_ > 0);
-                probs_.assign(nhands_*nactions_,
-                              1/static_cast<double>(nactions_));
-                ignore_masks_.assign(nhands_*nactions_, 0);
-        }
-
-        double Prob(const size_t& hand, const ActionType& type) const
-        {
-                assert(hand < nhands_ && type < nactions_);
-                return probs_[hand*nactions_+type];
-        }
-
-        void IgnoreAction(const size_t& hand, const ActionType& type)
-        {
-                assert(hand < nhands_ && type < nactions_);
-                ignore_masks_[hand*nactions_+type] |= 1 << type;
-        }
-
-        void Update(const Strategy& opponent)
-        {
-                vector<size_t> best(nactions_);
-
-                srand(time(0));
-                for (size_t h = 0; h < nhands_; ++h) {
-                        double bestEV = -1;
-                        double nties = 0;
-                        for (size_t a = 0; a < nactions_; ++a) {
-                                if (ignore_masks_[h*nactions_+a] & (1<<a))
-                                        continue;
-                                double EV = actions_[a]->EV(h,opponent,equity_);
-                                if (EV == bestEV)
-                                        best[++nties] = a;
-                                else if (EV > bestEV) {
-                                        bestEV = EV;
-                                        nties = 0;
-                                        best[0] = a;
-                                }
-                        }
-                        Inc(h, RandAction(best, nties+1));
-                }
-                ++nsamples_;
-        }
-
-        const EquiLUT& LUT() const
-        {
-                return equity_;
-        }
-
-private:
-        inline ActionType
-        RandAction(const vector<size_t> A, const size_t& size)
-        {
-                size_t i = static_cast<size_t>(
-                        static_cast<double>(rand())/RAND_MAX*size);
-                return static_cast<ActionType>(A[i]);
-        }
-
-        void Inc(const size_t& hand, const ActionType& type)
-        {
-                assert(hand < nhands_ && type < nactions_);
-                for (size_t T = 0; T<nactions_; T++) {
-                        double d = (static_cast<ActionType>(T) == type) ? 1 : 0;
-                        size_t idx = hand*nactions_+T;
-                        probs_[idx] = (nsamples_*probs_[idx]+d)/(nsamples_+1);
-                }
-        }
-
-        const size_t nhands_;
-        const size_t nactions_;
-        size_t nsamples_;
-        const vector<Action *> actions_;
-        const EquiLUT equity_;
-        vector<double> probs_;
-        vector<char> ignore_masks_;
-};
-
-class VillOpenFold : public Action {
-public:
-        VillOpenFold(const string& name, const double& stack)
-                : name_(name), stack_(stack)
-        {}
-
-        string Name() const { return name_; }
-
-        double EV(const size_t& hand,
-                  const Strategy& hero,
-                  const EquiLUT& equity) const
-        {
-                return stack_;
-        }
-private:
-        const string name_;
-        const double stack_;
-};
-
-class VillRaiseFold : public Action {
-public:
-        explicit VillRaiseFold(const string& name,
-                               const double& stack,
-                               const double& blinds,
-                               const double& raise)
-                : name_(name),
-                  stack_(stack),
-                  blinds_(blinds),
-                  raise_(raise)
-        {}
-
-        string Name() const { return name_; }
-
-        double EV(const size_t& hand,
-                  const Strategy& hero,
-                  const EquiLUT& equity) const
-        {
-                double EV = 0;
-                size_t N = 0;
-
-                for (size_t h = 0; h < equity.NumCols(); ++h) {
-                        double EQ = equity.Val(hand, h);
-                        if (EQ == -1)
-                                continue;
-                        ++N;
-                        double pot = blinds_+2*raise_;
-                        double bet = 2*pot/3;
-                        EV += hero.Prob(h, HERO_FOLD)*(stack_+blinds_) +
-                                hero.Prob(h, HERO_FLAT_CALL)*(
-                                        stack_-raise_-bet+EQ*(pot+2*bet)) +
-                                (hero.Prob(h, HERO_3BET_FOLD) +
-                                 hero.Prob(h, HERO_5BET))*(stack_-raise_);
-                }
-                return N > 0 ? EV/N : -1;
-        }
-private:
-        const string name_;
-        const double stack_;
-        const double blinds_;
-        const double raise_;
-};
-
-class Vill4betFold : public Action {
-public:
-        explicit Vill4betFold(const string& name,
-                              const double& stack,
-                              const double& blinds,
-                              const double& raise,
-                              const double& three_bet,
-                              const double& four_bet)
-                : name_(name),
-                  stack_(stack),
-                  blinds_(blinds),
-                  raise_(raise),
-                  three_bet_(three_bet),
-                  four_bet_(four_bet)
-        {}
-
-        string Name() const { return name_; }
-
-        double EV(const size_t& hand,
-                  const Strategy& hero,
-                  const EquiLUT& equity) const
-        {
-                double EV = 0;
-                size_t N = 0;
-
-                for (size_t h = 0; h < equity.NumCols(); ++h) {
-                        double EQ = equity.Val(hand, h);
-                        if (EQ == -1)
-                                continue;
-                        ++N;
-                        double pot = blinds_+2*raise_;
-                        double bet = 2*pot/3;
-                        EV += hero.Prob(h, HERO_FOLD)*(stack_+blinds_) +
-                                hero.Prob(h, HERO_FLAT_CALL) *
-                                (stack_-raise_-bet+EQ*(pot+2*bet)) +
-                                hero.Prob(h, HERO_3BET_FOLD) *
-                                (stack_+blinds_+three_bet_) +
-                                hero.Prob(h, HERO_5BET)*(stack_-four_bet_);
-                }
-                return N > 0 ? EV/N : -1;
-        }
-private:
-        const string name_;
-        const double stack_;
-        const double blinds_;
-        const double raise_;
-        const double three_bet_;
-        const double four_bet_;
-};
-
-class Vill4betCall : public Action {
-public:
-        explicit Vill4betCall(const string& name,
-                              const double& stack,
-                              const double& blinds,
-                              const double& raise,
-                              const double& three_bet)
-                : name_(name),
-                  stack_(stack),
-                  blinds_(blinds),
-                  raise_(raise),
-                  three_bet_(three_bet)
-        {}
-
-        string Name() const { return name_; }
-
-        double EV(const size_t& hand,
-                  const Strategy& hero,
-                  const EquiLUT& equity) const
-        {
-                double EV = 0;
-                size_t N = 0;
-
-                for (size_t h = 0; h < equity.NumCols(); ++h) {
-                        double EQ = equity.Val(hand, h);
-                        if (EQ == -1)
-                                continue;
-                        ++N;
-                        double pot = blinds_+2*raise_;
-                        double bet = 2*pot/3;
-                        EV += hero.Prob(h, HERO_FOLD)*(stack_+blinds_) +
-                                hero.Prob(h, HERO_FLAT_CALL) *
-                                (stack_-raise_-bet+EQ*(pot+2*bet)) +
-                                hero.Prob(h, HERO_3BET_FOLD) *
-                                (stack_ + blinds_ + three_bet_) +
-                                hero.Prob(h, HERO_5BET)*EQ*(blinds_ + 2*stack_);
-                }
-                return N > 0 ? EV/N : -1;
-        }
-private:
-        const string name_;
-        const double stack_;
-        const double blinds_;
-        const double raise_;
-        const double three_bet_;
-};
-
-class HeroFold : public Action {
-public:
-        explicit HeroFold(const string& name, const double& stack)
-                : name_(name), stack_(stack)
-        {}
-
-        string Name() const { return name_; }
-
-        double EV(const size_t& hand,
-                  const Strategy& vill,
-                  const EquiLUT& equity) const
-        {
-                return stack_;
-        }
-private:
-        const string name_;
-        const double stack_;
-};
-
-class HeroFlatCall : public Action {
-public:
-        explicit HeroFlatCall(const string& name,
-                              const double& stack,
-                              const double& blinds,
-                              const double& raise)
-                : name_(name),
-                  stack_(stack),
-                  blinds_(blinds),
-                  raise_(raise)
-        {}
-
-        string Name() const { return name_; }
-
-        double EV(const size_t& hand,
-                  const Strategy& vill,
-                  const EquiLUT& equity) const
-        {
-                double EV = 0;
-                size_t N = 0;
-
-                for (size_t v = 0; v < equity.NumCols(); ++v) {
-                        double EQ = equity.Val(hand, v);
-                        if (EQ == -1)
-                                continue;
-                        double pot = blinds_+2*raise_;
-                        double bet = 2*pot/3;
-                        double p = vill.Prob(v, VILL_OPEN_FOLD);
-                        ++N;
-                        EV += p*(stack_+blinds_) +
-                                (1-p)*(stack_-raise_-bet + EQ*(pot+2*bet));
-                }
-                return N > 0 ? EV/N : -1;
-        }
-private:
-        const string name_;
-        const double stack_;
-        const double blinds_;
-        const double raise_;
-};
-
-class Hero3betFold : public Action {
-public:
-        explicit Hero3betFold(const string& name,
-                              const double& stack,
-                              const double& blinds,
-                              const double& raise,
-                              const double& three_bet)
-                : name_(name),
-                  stack_(stack),
-                  blinds_(blinds),
-                  raise_(raise),
-                  three_bet_(three_bet)
-        {}
-
-        string Name() const { return name_; }
-
-        double EV(const size_t& hand,
-                  const Strategy& vill,
-                  const EquiLUT& equity) const
-        {
-                double EV = 0;
-                size_t N = 0;
-
-                for (size_t v = 0; v < equity.NumCols(); ++v) {
-                        if (equity.Val(hand, v) == -1)
-                                continue;
-                        ++N;
-                        EV += vill.Prob(v, VILL_OPEN_FOLD)*(stack_+blinds_) +
-                                vill.Prob(v, VILL_RAISE_FOLD) *
-                                (stack_ + blinds_ + raise_) +
-                                (vill.Prob(v, VILL_4BET_FOLD) +
-                                 vill.Prob(v, VILL_4BET_CALL)) *
-                                (stack_ - three_bet_);
-                }
-                return N > 0 ? EV/N : -1;
-        }
-private:
-        const string name_;
-        const double stack_;
-        const double blinds_;
-        const double raise_;
-        const double three_bet_;
-};
-
-class Hero5bet : public Action {
-public:
-        explicit Hero5bet(const string& name,
-                          const double& stack,
-                          const double& blinds,
+        explicit GameInfo(const double& stack,
+                          const double& pot,
                           const double& raise,
-                          const double& four_bet)
-                : name_(name),
-                  stack_(stack),
-                  blinds_(blinds),
-                  raise_(raise),
-                  four_bet_(four_bet)
-        {}
-
-        string Name() const { return name_; }
-
-        double EV(const size_t& hand,
-                  const Strategy& vill,
-                  const EquiLUT& equity) const
+                          const CardSet& board,
+                          const GTO::Range& vill,
+                          const GTO::Range& hero)
+                : stack(stack),
+                  pot(pot),
+                  raise(raise),
+                  vill_hands(RangeToVector(vill, board)),
+                  hero_hands(RangeToVector(hero, board)),
+                  equity(GTO::Array(vill_hands.size(), hero_hands.size()))
         {
-                double EV = 0;
-                size_t N = 0;
-
-                for (size_t v = 0; v < equity.NumCols(); ++v) {
-                        double EQh = equity.Val(hand, v);
-                        if (EQh == -1)
-                                continue;
-                        ++N;
-                        EV += vill.Prob(v, VILL_OPEN_FOLD)*(stack_+blinds_) +
-                                vill.Prob(v, VILL_RAISE_FOLD) *
-                                (stack_ + blinds_ + raise_) +
-                                vill.Prob(v, VILL_4BET_FOLD) *
-                                (stack_ + blinds_ + four_bet_) +
-                                vill.Prob(v, VILL_4BET_CALL) *
-                                EQh*(blinds_ + 2*stack_);
-                }
-                return N > 0 ? EV/N : -1;
+                GTO::EquiDist ED(vill, hero, board);
+                for (size_t v = 0; v < vill_hands.size(); v++)
+                        for (size_t h = 0; h < hero_hands.size(); h++)
+                                equity.Set(v,
+                                           h,
+                                           ED.Equity(vill_hands[v],
+                                                     hero_hands[h]));
         }
-private:
-        const string name_;
-        const double stack_;
-        const double blinds_;
-        const double raise_;
-        const double four_bet_;
 };
 
-double
-HeroEV(const Strategy& hero,
-       const Strategy& vill,
-       const double& stack,
-       const double& blinds,
-       const double& raise,
-       const double& three_bet,
-       const double& four_bet)
+void
+UtilError(const GTO::Node::Player& player, const string& name)
 {
-        double EV = 0;
-        double N = 0;
-        const EquiLUT& equity = hero.LUT();
-
-        for (size_t h = 0; h < equity.NumRows(); ++h)
-                for (size_t v = 0; v < equity.NumCols(); ++v) {
-                        double EQ = equity.Val(h, v);
-                        if (EQ == -1)
-                                continue;
-                        ++N;
-                        double pot = blinds+2*raise;
-                        double bet = 2*pot/3;
-                        EV += hero.Prob(h, HERO_FOLD)*stack;
-                        EV += hero.Prob(h, HERO_FLAT_CALL)*(
-                                vill.Prob(v, VILL_OPEN_FOLD)*(stack+blinds) +
-                                (1-vill.Prob(v, VILL_OPEN_FOLD))*(
-                                        stack-raise-bet+EQ*(pot+2*bet)));
-                        EV += hero.Prob(h, HERO_3BET_FOLD)*(
-                                vill.Prob(v, VILL_OPEN_FOLD)*(stack+blinds) +
-                                vill.Prob(v, VILL_RAISE_FOLD)*(
-                                        stack+blinds+raise) +
-                                (vill.Prob(v, VILL_4BET_FOLD) +
-                                 vill.Prob(v, VILL_4BET_CALL))*(
-                                         stack-three_bet));
-                        EV += hero.Prob(h, HERO_5BET)*(
-                                vill.Prob(v, VILL_OPEN_FOLD)*(stack+blinds) +
-                                vill.Prob(v, VILL_RAISE_FOLD)*(
-                                        stack+blinds+raise) +
-                                vill.Prob(v, VILL_4BET_FOLD)*(
-                                        stack+blinds+four_bet) +
-                                vill.Prob(v, VILL_4BET_CALL)*EQ*(
-                                        blinds+2*stack));
-                }
-        return N > 0 ? EV/N : -1;
+        fprintf(stderr, "Don't have utility for %d at %s\n", player,
+                name.c_str());
+        exit(1);
 }
 
-double
-VillEV(const Strategy& hero,
-       const Strategy& vill,
-       const double& stack,
-       const double& blinds,
-       const double& raise,
-       const double& three_bet,
-       const double& four_bet)
-{
-        double EV = 0;
-        double N = 0;
-        const EquiLUT& equity = vill.LUT();
+class HeroRaiseFold : public GTO::Leaf {
+public:
+        explicit HeroRaiseFold(const string& name, const GameInfo& info)
+                : GTO::Leaf(name), info_(info)
+        {}
 
-        for (size_t v = 0; v < equity.NumRows(); ++v)
-                for (size_t h = 0; h < equity.NumCols(); ++h) {
-                        double EQ = equity.Val(v, h);
-                        if (EQ == -1)
-                                continue;
-                        ++N;
-                        double pot = blinds+2*raise;
-                        double bet = 2*pot/3;
-                        EV += vill.Prob(v, VILL_OPEN_FOLD)*stack;
-                        EV += vill.Prob(v, VILL_RAISE_FOLD)*(
-                                hero.Prob(h, HERO_FOLD)*(stack+blinds) +
-                                hero.Prob(h, HERO_FLAT_CALL)*(
-                                        stack-raise-bet+EQ*(pot+2*bet)) +
-                                (hero.Prob(h, HERO_3BET_FOLD) +
-                                 hero.Prob(h, HERO_5BET))*(stack-raise));
-                        EV += vill.Prob(v, VILL_4BET_FOLD)*(
-                                hero.Prob(h, HERO_FOLD)*(stack+blinds) +
-                                hero.Prob(h, HERO_FLAT_CALL)*(
-                                        stack-pot-raise+EQ*2*(pot+raise)) +
-                                hero.Prob(h, HERO_3BET_FOLD)*(
-                                        stack+blinds+three_bet) +
-                                hero.Prob(h, HERO_5BET)*(stack-four_bet));
-                        EV += vill.Prob(v, VILL_4BET_CALL)*(
-                                hero.Prob(h, HERO_FOLD)*(stack+blinds) +
-                                hero.Prob(h, HERO_FLAT_CALL)*(
-                                        stack-pot-raise+EQ*2*(pot+raise)) +
-                                hero.Prob(h, HERO_3BET_FOLD)*(
-                                        stack+blinds+three_bet) +
-                                hero.Prob(h, HERO_5BET)*EQ*(blinds+2*stack));
+        double Utility(const Player& player,
+                       const size_t& pid,
+                       const size_t& oid) const
+        {
+                double EV = 0;
+
+                switch (player) {
+                case GTO::Node::HERO:
+                        EV = info_.stack-info_.raise;
+                        break;
+                case GTO::Node::VILLAIN:
+                        EV = info_.stack + info_.pot + info_.raise;
+                        break;
+                default:
+                        UtilError(player, Name());
+                        break;
                 }
-        return N > 0 ? EV/N : -1;
+                return EV;
+        }
+private:
+        const GameInfo& info_;
+};
+
+
+class HeroRaiseCall : public GTO::Leaf {
+public:
+        explicit HeroRaiseCall(const string& name, const GameInfo& info)
+                : GTO::Leaf(name), info_(info)
+        {}
+
+        double Utility(const Player& player,
+                       const size_t& pid,
+                       const size_t& oid) const
+        {
+                double EQ = 0;
+
+                switch (player) {
+                case GTO::Node::HERO:
+                        EQ = info_.equity.Get(oid, pid);
+                        assert(EQ >= 0);
+                        EQ = 1-EQ;
+                        break;
+                case GTO::Node::VILLAIN:
+                        EQ = info_.equity.Get(pid, oid);
+                        assert(EQ >= 0);
+                        break;
+                default:
+                        UtilError(player, Name());
+                        break;
+                }
+                return EQ*(2*info_.stack+info_.pot);
+        }
+
+private:
+        const GameInfo& info_;
+};
+
+class VillBetFold : public GTO::Leaf {
+public:
+        explicit VillBetFold(const string& name, const GameInfo& info)
+                : GTO::Leaf(name), info_(info)
+        {}
+
+        double Utility(const Player& player,
+                       const size_t& pid,
+                       const size_t& oid) const
+        {
+                double EV = 0;
+
+                switch (player) {
+                case GTO::Node::HERO:
+                        EV = info_.stack + info_.pot;
+                        break;
+                case GTO::Node::VILLAIN:
+                        EV = info_.stack;
+                        break;
+                default:
+                        UtilError(player, Name());
+                        break;
+                }
+                return EV;
+        }
+
+private:
+        const GameInfo& info_;
+};
+
+class HeroFold : public GTO::Leaf {
+public:
+        explicit HeroFold(const string& name, const GameInfo& info)
+                : GTO::Leaf(name), info_(info)
+        {}
+
+        double Utility(const Player& player,
+                       const size_t& pid,
+                       const size_t& oid) const
+        {
+                double EV = 0;
+
+                switch (player) {
+                case GTO::Node::HERO:
+                        EV = info_.stack;
+                        break;
+                case GTO::Node::VILLAIN:
+                        EV = info_.stack + info_.pot;
+                        break;
+                default:
+                        UtilError(player, Name());
+                        break;
+                }
+                return EV;
+        }
+
+private:
+        const GameInfo& info_;
+};
+
+void
+PrintTree(const GTO::Node& node,
+          const GTO::Node::Player& player,
+          const vector<CardSet>& hands)
+{
+        if (node.IsLeaf())
+                return;
+        const vector<GTO::Node *>& children = node.Children();
+        if (node.ActivePlayer() == player) {
+                GTO::Array strat = node.AverageStrategy();
+                size_t nstates = strat.NumRows();
+                size_t nactions = strat.NumCols();
+                printf("Hand");
+                for (size_t a = 0; a < nactions; a++)
+                        printf(" | %s", children[a]->Name().c_str());
+                putchar('\n');
+                for (size_t s = 0; s < nstates; s++) {
+                        printf("%s", hands[s].str().c_str());
+                        for (size_t a = 0; a < nactions; a++)
+                                printf(" %.4f", strat.Get(s, a));
+                        putchar('\n');
+                }
+        }
+        for (auto it = children.begin(); it != children.end(); ++it)
+                PrintTree(**it, player, hands);
+}
+
+void
+LeafNames(const GTO::Node& node,
+          vector<string>& hnames,
+          vector<string>& vnames)
+{
+        if (node.IsLeaf())
+                return;
+        bool isterm = true;
+        for (auto it = node.Children().begin();
+             it != node.Children().end();
+             ++it) {
+                if ((*it)->IsLeaf())
+                        if (node.ActivePlayer() == GTO::Node::HERO)
+                                hnames.push_back((*it)->Name());
+                        else
+                                vnames.push_back((*it)->Name());
+                else
+                        isterm = false;
+                LeafNames(**it, hnames, vnames);
+        }
+        if (isterm) {
+                if (node.ActivePlayer() == GTO::Node::HERO)
+                        vnames.push_back(node.Name());
+                else
+                        hnames.push_back(node.Name());
+        }
+}
+
+void
+ProbArrayIter(const GTO::Node& node,
+              const size_t& id,
+              const GTO::Node::Player& player,
+              const double& p,
+              size_t& idx,
+              GTO::Array& probs)
+{
+        if (node.IsLeaf())
+                return;
+        GTO::Array strat = node.AverageStrategy();
+        bool isactive = node.ActivePlayer() == player;
+        bool isterm = true;
+
+        for (size_t a = 0; a < node.Children().size(); a++) {
+                GTO::Node* c = node.Children()[a];
+                if (c->IsLeaf()) {
+                        if (isactive)
+                                probs.Set(id, idx++, p*strat.Get(id, a));
+
+                } else
+                        isterm = false;
+                ProbArrayIter(*c,
+                              id,
+                              player,
+                              isactive ? p*strat.Get(id, a) : p,
+                              idx,
+                              probs);
+        }
+        if (isterm && !isactive)
+                probs.Set(id, idx++, p);
+}
+
+void
+ProbArray(const GTO::Node& node,
+          const GTO::Node::Player& player,
+          GTO::Array& probs)
+{
+        for (size_t id = 0; id < probs.NumRows(); id++) {
+                size_t idx = 0;
+                ProbArrayIter(node, id, player, 1.0, idx, probs);
+        }
 }
 
 struct Record {
-        size_t hand;
+        string hand;
         double prob;
-        double EV;
 
-        explicit Record(const size_t& hand,
-                        const double& prob,
-                        const double& EV)
-                : hand(hand), prob(prob), EV(EV)
+        explicit Record(const string& hand, const double& prob)
+                : hand(hand), prob(prob)
         {}
 
         bool operator<(const Record& rhs) const
         {
-                return rhs.prob < prob ||
-                                  (rhs.prob == prob && rhs.EV < EV);
+                return rhs.prob < prob;
         }
 };
 
 void
-PrintResults(const vector<CardSet>& hands,
-             const Strategy& hero,
-             const Strategy& vill,
-             const vector<Action *>& actions)
+PrintProbs(const string& player,
+           const vector<CardSet>& hands,
+           const GTO::Array& probs,
+           const vector<string>& names,
+           const double& util)
 {
-        size_t size = hands.size();
-        vector<Record> R;
+        vector<Record> records;
+        double total = 0.0;
 
-        for (size_t a = 0; a < actions.size(); ++a) {
-                size_t N = 0;
-                double total = 0;
-                ActionType T = static_cast<ActionType>(a);
-                R.clear();
-                R.reserve(size);
-                for (size_t h = 0; h < size; ++h) {
-                        double p = hero.Prob(h, T);
-                        if (p < 0.05)
-                                continue;
-                        ++N;
-                        total += p;
-                        R.push_back(
-                                Record(h,p,actions[T]->EV(h,vill,hero.LUT())));
+        printf("%s: %.4f\n", player.c_str(), util);
+        for (size_t n = 0; n < names.size(); n++) {
+                total = 0.0;
+                records.clear();
+                records.reserve(hands.size());
+                for (size_t id = 0; id < hands.size(); id++) {
+                        if (probs.Get(id, n) >= 0.05) {
+                                records.push_back(Record(hands[id].str(),
+                                                         probs.Get(id, n)));
+                                total += probs.Get(id, n);
+                        }
                 }
-                printf("%s range: %.2f hand%c\n", actions[a]->Name().c_str(),
-                       total, total > 1 ? 's' : ' ');
-                printf("Hand\tProb\tEV\n");
-                sort(R.begin(), R.begin()+N);
-                for (size_t i = 0; i < N; ++i)
-                        printf("%s\t%.4f\t%.4f\n",
-                               hands[R[i].hand].str().c_str(),
-                               R[i].prob,
-                               R[i].EV);
-                printf("\n");
+                sort(records.begin(), records.end());
+                printf("%s range: %.2f hand%c\n", names[n].c_str(), total,
+                       total == 1 ? ' ' : 's');
+                printf("Hand\tProb\n");
+                for (auto it = records.begin(); it != records.end(); ++it)
+                        printf("%s\t%.4f\n", it->hand.c_str(), it->prob);
         }
 }
+
+void
+PrintNode(const GTO::Node& root,
+          const double& hutil,
+          const double& vutil,
+          const vector<CardSet>& hhands,
+          const vector<CardSet>& vhands)
+{
+        vector<string> hnames;
+        vector<string> vnames;
+        LeafNames(root, hnames, vnames);
+        GTO::Array hprobs(hhands.size(), hnames.size());
+        GTO::Array vprobs(vhands.size(), vnames.size());
+        ProbArray(root, GTO::Node::HERO, hprobs);
+        ProbArray(root, GTO::Node::VILLAIN, vprobs);
+        PrintProbs("SB", vhands, vprobs, vnames, vutil);
+        putchar('\n');
+        PrintProbs("CO", hhands, hprobs, hnames, hutil);
 }
 
-using GTO::Range;
-using pokerstove::CardSet;
+void
+Deal(const GameInfo& info, size_t& hero_id, size_t& vill_id)
+{
+        for (;;) {
+                hero_id = RandInt(info.hero_hands.size());
+                vill_id = RandInt(info.vill_hands.size());
+                if (info.hero_hands[hero_id].disjoint(info.vill_hands[vill_id]))
+                        return;
+        }
+}
+
+void
+Simulate(const double& stack,
+         const double& pot,
+         const double& raise,
+         const CardSet& board,
+         const GTO::Range& vill,
+         const GTO::Range& hero)
+{
+        GameInfo info(stack, pot, raise, board, vill, hero);
+        size_t vsize = info.vill_hands.size();
+        size_t hsize = info.hero_hands.size();
+        vector<GTO::Node *> shove_children = {
+                new HeroRaiseFold("Bluff raising", info),
+                new HeroRaiseCall("Calling", info)
+        };
+        vector<GTO::Node *> raise_children = {
+                new VillBetFold("Bet folding", info),
+                new GTO::ParentNode("Shoving",
+                                    GTO::Node::HERO,
+                                    hsize,
+                                    shove_children)
+        };
+        vector<GTO::Node *> root_children = {
+                new HeroFold("Folding", info),
+                new GTO::ParentNode("Raising",
+                                    GTO::Node::VILLAIN,
+                                    vsize,
+                                    raise_children)
+        };
+        GTO::ParentNode root("root",
+                             GTO::Node::HERO,
+                             hsize,
+                             root_children);
+        double vutil = 0.0;
+        double hutil = 0.0;
+        size_t niter = 1000000000;
+        size_t hero_id = 0;
+        size_t vill_id = 0;
+        srand(time(NULL));
+        for (size_t i = 0; i < niter; i++) {
+                Deal(info, hero_id, vill_id);
+                vutil += root.CFR(GTO::Node::VILLAIN, vill_id, hero_id);
+                Deal(info, hero_id, vill_id);
+                hutil += root.CFR(GTO::Node::HERO, hero_id, vill_id);
+                if (i % 1000000 == 0 && i > 0)
+                        fprintf(stderr, "%d Villain: %.8f, Hero: %.8f\n",
+                                i, vutil/i, hutil/i);
+        }
+        PrintNode(root,
+                  hutil/niter,
+                  vutil/niter,
+                  info.hero_hands,
+                  info.vill_hands);
+}
+
+} // namespace
 
 int
 main(int argc, char *argv[])
 {
-        Range hero;
-        Range vill;
-        Range vill_open("77+,A7s+,K9s+,QTs+,JTs,ATo+,KTo+,QJo");
-        Range hero_call("22+,A2s+,K6s+,Q8s+,J8s+,T7s+,96s+,85s+,74s+,63s+,52s+,42s+,32s,A8o+,K9o+,QTo+,JTo");
-CardSet board;
-        vector<CardSet> hhands;
-        vector<CardSet> vhands;
-        double stack = 100;
-        double blinds = 1.5;
-        double raise = 3;
-        double three_bet = 9;
-        double four_bet = 27;
-
-        hero.Fill();
-        vill.Fill();
-        AddRange(hero, board, hhands);
-        AddRange(vill, board, vhands);
-        GTO::EquiDist ED(hero, vill, board);
-        vector<Action *> vactions(4);
-        vector<Action *> hactions(4);
-
-        vactions[VILL_OPEN_FOLD] = new VillOpenFold("Open fold", stack);
-        vactions[VILL_RAISE_FOLD] = new VillRaiseFold(
-                "Open raise bluff", stack, blinds, raise);
-        vactions[VILL_4BET_FOLD] = new Vill4betFold(
-                "4-bet bluff", stack, blinds, raise, three_bet, four_bet);
-        vactions[VILL_4BET_CALL] = new Vill4betCall(
-                "4-bet call", stack, blinds, raise, three_bet);
-        hactions[HERO_FOLD] = new HeroFold("Fold", stack);
-        hactions[HERO_FLAT_CALL] = new HeroFlatCall(
-                "Flat call", stack, blinds, raise);
-        hactions[HERO_3BET_FOLD] = new Hero3betFold(
-                "3-bet bluff", stack, blinds, raise, three_bet);
-        hactions[HERO_5BET] = new Hero5bet(
-                "5-bet", stack, blinds, raise, four_bet);
-
-        Strategy hstrategy(hactions, hhands, vhands, ED);
-        Strategy vstrategy(vactions, vhands, hhands, ED);
-
-        for (size_t v = 0; v < vhands.size(); ++v)
-                if (vill_open.IsMember(vhands[v]))
-                        vstrategy.IgnoreAction(v, VILL_OPEN_FOLD);
-                else {
-                        vstrategy.IgnoreAction(v, VILL_RAISE_FOLD);
-                        vstrategy.IgnoreAction(v, VILL_4BET_FOLD);
-                        vstrategy.IgnoreAction(v, VILL_4BET_CALL);
-                }
-
-        for (size_t h = 0; h < hhands.size(); ++h)
-                if (hero_call.IsMember(hhands[h]))
-                        hstrategy.IgnoreAction(h, HERO_FOLD);
-                else {
-                        hstrategy.IgnoreAction(h, HERO_FLAT_CALL);
-                        hstrategy.IgnoreAction(h, HERO_3BET_FOLD);
-                        hstrategy.IgnoreAction(h, HERO_5BET);
-                }
-
-        double hEV = 0;
-        double vEV = 0;
-        for (size_t i = 0; i < 10000; ++i) {
-                hstrategy.Update(vstrategy);
-                vstrategy.Update(hstrategy);
-                if (i % 100 == 0) {
-                        hEV = HeroEV(hstrategy,
-                                     vstrategy,
-                                     stack,
-                                     blinds,
-                                     raise,
-                                     three_bet,
-                                     four_bet);
-                        vEV = VillEV(hstrategy,
-                                     vstrategy,
-                                     stack,
-                                     blinds,
-                                     raise,
-                                     three_bet,
-                                     four_bet);
-                        fprintf(stderr, "Iteration %d: EV(EP) = %.6f, \
-EV(BTN) = %.6f\n", i, vEV, hEV);
-                }
-        }
-        printf("UTG: EV = %.4f\n", vEV);
-        PrintResults(vhands, vstrategy, hstrategy, vactions);
-        printf("\nBTN: EV = %.4f\n", hEV);
-        PrintResults(hhands, hstrategy, vstrategy, hactions);
+        GTO::Range vill("74,75,54,6d5d,77,44,55,88,63,86,Ad7h,Ad7c,Ad7s,Kd7h,Kd7c,Kd7s,Ad6h,Ad6c,Ad6s,Kd6h,Kd6c,Kd6s,3d2d,6d2d,9d6d,Td6d,Jd6d,Qd6d,Kd6d,Ad6d,Ad8d,Kd8d,Ad3d,Kd3d");
+        GTO::Range hero("77-22,ATs-A2s,K2s+,Q7s+,J8s+,T8s+,97s+,86s+,75s+,64s+,53s+,42s+,32s,ATo-A8o,K9o+,QTo+,JTo");
+        Simulate(4135, 550, 500, pokerstove::CardSet("7d4d5h"), vill, hero);
 
         return 0;
 }
