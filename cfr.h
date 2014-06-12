@@ -181,6 +181,8 @@ public:
                        Array(),
                        vector<double>())
         {}
+
+        ~Leaf() {}
 };
 
 }
