@@ -21,7 +21,8 @@ CHILDREN        : Array containing the children of the node.
 REGRET-SUM      : Array containing the sum of regrets of each action.
 STRATEGY        : Array of probabilities of taking each action.
 STRATEGY-SUM	: Array containing the sum of all the previous strategies.
-UTILITY         : Utility function for a leaf node."
+UTILITY         : Utility function for a leaf node.
+UTILS           : Local storage array for the utilities of each action."
   (name (error "Need to supply a name.")
    :type simple-string
    :read-only t)
@@ -41,6 +42,9 @@ UTILITY         : Utility function for a leaf node."
    :type (simple-array double-float)
    :read-only t)
   (strategy-sum +empty-double-array+
+   :type (simple-array double-float)
+   :read-only t)
+  (utils +empty-double-array+
    :type (simple-array double-float)
    :read-only t))
 
@@ -63,7 +67,8 @@ to by an unique id between 0 and NUM-STATES - 1."
                 :regret-sum (make-double-array dims)
                 :strategy-sum (make-double-array dims)
                 :strategy (make-double-array
-                           dims :initial-element (/ 1.0d0 (length children))))))
+                           dims :initial-element (/ 1.0d0 (length children)))
+                :utils (make-double-array (length children)))))
 
 (defun make-leaf (name utility)
   "Like `make-node', create a new leaf with name NAME. UTILITY is a
@@ -116,8 +121,7 @@ his opponent."
              ((simple-array double-float) strategy regret-sum strategy-sum))
     (when (eq children +empty-children+)
       (return-from cfr (funcall (the function (utility node)) player pid oid)))
-    (let ((utils (the (simple-array double-float)
-                      (make-double-array (length children))))
+    (let ((utils (utils node))
           (id (if (eq (active-player node) player) pid oid))
           (util 0.0d0))
       (dotimes (a (length children))
