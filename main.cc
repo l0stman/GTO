@@ -1,9 +1,8 @@
 #include "cfr.h"
 
 #include <cstdlib>
-#include <ctime>
 
-#include <algorithm>
+#include <random>
 #include <vector>
 
 #include "equi_dist.h"
@@ -13,12 +12,6 @@ namespace {
 using std::vector;
 using pokerstove::CardSet;
 using std::string;
-
-inline size_t
-RandInt(const size_t& n)
-{
-        return static_cast<size_t>(rand()/(RAND_MAX+1.0)*n);
-}
 
 vector<CardSet>
 RangeToVector(const GTO::Range& r, const CardSet& board)
@@ -357,11 +350,16 @@ PrintNode(const GTO::Node& root,
 }
 
 void
-Deal(const GameInfo& info, size_t& hero_id, size_t& vill_id)
+Deal(const GameInfo& info,
+     std::mt19937& generator,
+     std::uniform_int_distribution<size_t>& hdist,
+     std::uniform_int_distribution<size_t>& vdist,
+     size_t& hero_id,
+     size_t& vill_id)
 {
         for (;;) {
-                hero_id = RandInt(info.hero_hands.size());
-                vill_id = RandInt(info.vill_hands.size());
+                hero_id = hdist(generator);
+                vill_id = vdist(generator);
                 if (info.hero_hands[hero_id].disjoint(info.vill_hands[vill_id]))
                         return;
         }
@@ -402,14 +400,17 @@ Simulate(const double& stack,
                              root_children);
         double vutil = 0.0;
         double hutil = 0.0;
-        size_t niter = 1000000000;
+        size_t niter = 50000000;
         size_t hero_id = 0;
         size_t vill_id = 0;
-        srand(time(NULL));
+        std::random_device rd;
+        std::mt19937 generator(rd());
+        std::uniform_int_distribution<size_t> hdist(0, hsize-1);
+        std::uniform_int_distribution<size_t> vdist(0, vsize-1);
         for (size_t i = 0; i < niter; i++) {
-                Deal(info, hero_id, vill_id);
+                Deal(info, generator, hdist, vdist, hero_id, vill_id);
                 vutil += root.CFR(GTO::Node::VILLAIN, vill_id, hero_id);
-                Deal(info, hero_id, vill_id);
+                Deal(info, generator, hdist, vdist, hero_id, vill_id);
                 hutil += root.CFR(GTO::Node::HERO, hero_id, vill_id);
                 if (i % 1000000 == 0 && i > 0)
                         fprintf(stderr, "%d Villain: %.8f, Hero: %.8f\n",
