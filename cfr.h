@@ -61,7 +61,7 @@ public:
         const Player& ActivePlayer() const { return active_player_; }
         const vector<Node *>& Children() const { return children_; }
 
-        // Returns the utility of PLAYER at a leaf node. PID is the
+        // Return the utility of PLAYER at a leaf node. PID is the
         // stade id of PLAYER and OID the state id of his opponent.
         virtual double Utility(const Player& player,
                                const size_t& pid,
@@ -69,8 +69,11 @@ public:
 
         // Return the average info set mixed strategy across all
         // iterations.  The returned value is an Array.  The rows
-        // correspond the states id of the active player and the
-        // columns to the actions taken at the node.
+        // correspond to the states id of the active player and the
+        // columns to the actions taken at the node.  The value at a
+        // given row and column is the probability that the current
+        // active player takes the given action if he's in the given
+        // state.
         Array AverageStrategy() const;
 
         // Test if the node is a leaf.
@@ -80,7 +83,7 @@ public:
         }
 
         // Return the utility at the current node of a given PLAYER
-        // and the counterfactual regret minimization algorithm to
+        // using the counterfactual regret minimization algorithm to
         // update the game tree under node.  PID is the state id of
         // PLAYER and OID the state id of his opponent.
         double CFR(const Player& player, const size_t& pid, const size_t& oid)
