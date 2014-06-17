@@ -13,17 +13,6 @@ using std::vector;
 using pokerstove::CardSet;
 using std::string;
 
-vector<CardSet>
-RangeToVector(const GTO::Range& r, const CardSet& board)
-{
-        vector<CardSet> hands;
-        hands.reserve(r.Size());
-        for (auto it = r.begin(); it != r.end(); it++)
-                if (board.disjoint(*it))
-                        hands.push_back(*it);
-        return hands;
-}
-
 struct GameInfo {
         const double stack;
         const double pot;
@@ -44,8 +33,8 @@ struct GameInfo {
                   pot(pot),
                   bet(bet),
                   raise(raise),
-                  vill_hands(RangeToVector(vill, board)),
-                  hero_hands(RangeToVector(hero, board)),
+                  vill_hands(vill.ToVector(board)),
+                  hero_hands(hero.ToVector(board)),
                   equity(GTO::Array(vill_hands.size(), hero_hands.size()))
         {
                 GTO::EquiDist ED(vill, hero, board);

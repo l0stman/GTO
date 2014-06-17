@@ -13,19 +13,21 @@ namespace GTO {
 using pokerstove::CardSet;
 using std::unordered_set;
 using std::string;
+using std::vector;
 
 class Range {
 public:
         Range() {};
         explicit Range(const string& s);
         // Build a range from the hands between [min, max).
-        explicit Range(const std::vector<CardSet>& hands,
+        explicit Range(const vector<CardSet>& hands,
                        const size_t& min,
                        const size_t& max);
         virtual bool IsMember(const CardSet& hand) const;
         virtual void Add(const CardSet& hand);
         virtual void Remove(const CardSet& hand);
         virtual void Fill();
+        virtual vector<CardSet> ToVector(const CardSet& board=CardSet()) const;
 
         string Str() const;
         size_t Size() const { return range_.size();};
@@ -34,8 +36,8 @@ public:
                 bool
                 operator()(const CardSet& h1, const CardSet& h2) const
                 {
-                        std::vector<pokerstove::Card> c1 = h1.cards();
-                        std::vector<pokerstove::Card> c2 = h2.cards();
+                        vector<pokerstove::Card> c1 = h1.cards();
+                        vector<pokerstove::Card> c2 = h2.cards();
                         int t1 = (c1[0] < c1[1]) ? 1 : 0;
                         int t2 = (c2[0] < c2[1]) ? 1 : 0;
 

@@ -393,6 +393,17 @@ Range::Fill()
                 }
 }
 
+vector<CardSet>
+Range::ToVector(const CardSet& board) const
+{
+        vector<CardSet> hands;
+        hands.reserve(Size());
+        for (auto it = begin(); it != end(); ++it)
+                if (board.disjoint(*it))
+                        hands.push_back(*it);
+        return hands;
+}
+
 string
 Range::Str() const
 {
