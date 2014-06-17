@@ -161,6 +161,8 @@ public:
                 }
         }
 
+        ~ParentNode() {}
+
         // A non-terminal node doesn't need this method.
         double Utility(const Player& player,
                        const size_t& pid,
