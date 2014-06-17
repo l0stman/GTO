@@ -1,4 +1,4 @@
-CC		= clang++ -std=c++11
+CC		= c++ -std=c++11
 #CXXFLAGS	= -O3 -Wall -pedantic -DNDEBUG			# Production use
 CXXFLAGS	= -O0 -Wall -pedantic -g3			# Debug mode
 #CXXFLAGS	= -O3 -Wall -pedantic -DNDEBUG -g3		# Profiling mode
