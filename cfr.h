@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "array.h"
+#include "err.h"
 
 namespace GTO {
 using std::string;
@@ -118,11 +119,9 @@ public:
                        Array(nstates, children.size(), 1.0/children.size()),
                        vector<double>(children.size()))
         {
-                if (children.size() == 0) {
-                        fprintf(stderr, "CHILDREN should be a non-empty vector\
- of nodes\n");
-                        exit(1);
-                }
+                if (children.size() == 0)
+                        err::quit("children of %s should be a non-empty vector \
+of nodes.", name.c_str());
         }
 
         ~ParentNode() {}

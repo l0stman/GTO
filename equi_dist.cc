@@ -8,6 +8,8 @@
 #include <pokerstove/peval/PokerHandEvaluator.h>
 #include <pokerstove/util/combinations.h>
 
+#include "err.h"
+
 namespace GTO {
 using std::vector;
 using pokerstove::PokerHandEvaluator;
@@ -31,9 +33,8 @@ EquiDist::EquiDist(const Range& hero,
                 InitRiver(hero, villain, board);
                 break;
         default:
-                fprintf(stderr, "Unsupported initial board size: %s\n",
-                        board.str().c_str());
-                exit(1);
+                err::quit("Unsupported initial board size: %s.",
+                          board.str().c_str());
         }
 }
 
@@ -123,10 +124,8 @@ EquiDist::InitPreflop(const Range& hero, const Range& villain)
         double EQv = 0;
         EQTable equity;
 
-        if ((fp = fopen(preflop_file_, "r")) == NULL) {
-                fprintf(stderr, "Can't open %s\n", preflop_file_);
-                exit(0);
-        }
+        if ((fp = fopen(preflop_file_, "r")) == NULL)
+                err::sys("Can't open %s", preflop_file_);
         while (fscanf(fp, "%s vs. %s : %lf vs. %lf", h, v, &EQh, &EQv)!=EOF) {
                 Range hr(h);
                 Range vr(v);

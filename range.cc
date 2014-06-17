@@ -6,6 +6,8 @@
 #include <cstdlib>
 #include <set>
 
+#include "err.h"
+
 namespace {
 using std::string;
 
@@ -15,8 +17,7 @@ const string kSuits = "cdhs";
 void
 FmtError(const string& s)
 {
-        fprintf(stderr, "Unknown range format: %s\n", s.c_str());
-        exit(1);
+        err::quit("Unknown range format: %s.", s.c_str());
 }
 
 inline size_t
