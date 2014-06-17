@@ -155,13 +155,6 @@ EquiDist::InitPreflop(const Range& hero, const Range& villain)
                         }
 }
 
-double EquiDist::Equity(const Hand& hero, const Hand& villain) const
-{
-        PairHands p(hero, villain);
-
-        return equity_.count(p) > 0 ? equity_.at(p) : -1;
-}
-
 Array
 EquiDist::LUT(const std::vector<Hand>& hands1,
               const std::vector<Hand>& hands2) const

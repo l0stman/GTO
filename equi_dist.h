@@ -34,7 +34,6 @@ struct hash<GTO::PairHands> {
 } // namespace std
 
 namespace GTO {
-
 class EquiDist {
 public:
         explicit EquiDist(const Range& hero,
@@ -43,7 +42,12 @@ public:
 
         // Return the equity of hero's hand against villain's or -1 if
         // it doesn't exist.
-        double Equity(const Hand& hero, const Hand& vill) const;
+        double
+        Equity(const Hand& hero, const Hand& villain) const
+        {
+                PairHands p(hero, villain);
+                return equity_.count(p) > 0 ? equity_.at(p) : -1;
+        }
 
         // Return a lookup table represented as an array such that
         // Array.get(i, j) == Equity(hands1[i], hands2[j]).
