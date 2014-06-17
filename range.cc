@@ -342,14 +342,6 @@ Range::Range(const string& in)
                 }
 }
 
-Range::Range(const std::vector<CardSet>& hands,
-             const size_t& min,
-             const size_t& max)
-{
-        for (size_t i = min; i < max; i++)
-                range_.insert(hands[i]);
-}
-
 bool
 Range::IsMember(const CardSet& hand) const
 {
@@ -369,7 +361,7 @@ Range::Remove(const CardSet& hand)
 }
 
 void
-Range::Fill()
+Range::Fill(const CardSet& dead_cards)
 {
         string c1(2, 'x');
         string c2(2, 'x');
@@ -387,7 +379,8 @@ Range::Fill()
 
                                         if (hand.disjoint(C)) {
                                                 hand.insert(C);
-                                                Add(hand);
+                                                if (hand.disjoint(dead_cards))
+                                                        Add(hand);
                                          }
                                 }
                 }

@@ -19,15 +19,19 @@ class Range {
 public:
         Range() {};
         explicit Range(const string& s);
-        // Build a range from the hands between [min, max).
-        explicit Range(const vector<CardSet>& hands,
-                       const size_t& min,
-                       const size_t& max);
+        // Test if HAND is a member of the range.
         virtual bool IsMember(const CardSet& hand) const;
+        // Add HAND to the range.
         virtual void Add(const CardSet& hand);
+        // Remove HAND from the range.
         virtual void Remove(const CardSet& hand);
-        virtual void Fill();
-        virtual vector<CardSet> ToVector(const CardSet& board=CardSet()) const;
+        // Add all possible hands to the range except those who
+        // conflict with DEAD_CARDS.
+        virtual void Fill(const CardSet& dead_cards=CardSet());
+        // Return a vector of all the hands in the range that don't
+        // conflict with DEAD_CARDS.
+        virtual vector<CardSet> ToVector(
+                const CardSet& dead_cards=CardSet()) const;
 
         string Str() const;
         size_t Size() const { return range_.size();};
