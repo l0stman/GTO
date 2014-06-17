@@ -17,7 +17,7 @@ public:
                           const CardSet& board=CardSet());
 
         // Return the equity of hero's hand against villain's or -1 if
-        // it doesn't exit.
+        // it doesn't exist.
         double Equity(const CardSet& hero, const CardSet& vill) const;
 
         // Return a lookup table represented as an array such that
