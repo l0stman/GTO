@@ -1,7 +1,6 @@
 #ifndef GTO_RANGE_H_
 #define GTO_RANGE_H_
 
-#include <functional>
 #include <string>
 #include <unordered_set>
 #include <vector>
