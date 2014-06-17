@@ -32,13 +32,14 @@ private:
                             const Range& villain,
                             const CardSet& board);
         void InitPreflop(const Range& hero, const Range& villain);
-        void SetEquity(const CardSet& hero,
-                       const CardSet& villain,
-                       const double& val)
+        void set_equity(const CardSet& hero,
+                        const CardSet& villain,
+                        const double& val)
         {
                 std::pair<CardSet, CardSet> p(hero, villain);
                 equity_[p] = val;
         }
+
         struct CSPairHash {
                 // Use the function hash_combine from boost
                 void

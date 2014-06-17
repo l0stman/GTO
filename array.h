@@ -18,22 +18,22 @@ public:
                   ncols_(ncols)
         {}
 
-        size_t NumRows() const { return nrows_; }
-        size_t NumCols() const { return ncols_; }
+        size_t num_rows() const { return nrows_; }
+        size_t num_cols() const { return ncols_; }
 
-        double Get(size_t row, size_t col) const
+        double get(size_t row, size_t col) const
         {
                 assert(row < nrows_ && col < ncols_);
                 return vect_[row*ncols_+col];
         }
 
-        void Set(size_t row, size_t col, double val)
+        void set(size_t row, size_t col, double val)
         {
                 assert(row < nrows_ && col < ncols_);
                 vect_[row*ncols_+col] = val;
         }
 
-        void Inc(size_t row, size_t col, double val)
+        void inc(size_t row, size_t col, double val)
         {
                 assert(row < nrows_ && col < ncols_);
                 vect_[row*ncols_+col] += val;

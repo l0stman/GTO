@@ -22,9 +22,9 @@ public:
                 NOBODY
         };
 
-        const string& Name() const { return name_; }
-        const Player& ActivePlayer() const { return active_player_; }
-        const vector<Node *>& Children() const { return children_; }
+        const string& name() const { return name_; }
+        const Player& active_player() const { return active_player_; }
+        const vector<Node *>& children() const { return children_; }
 
         // Return the utility of PLAYER at a leaf node. PID is the
         // stade id of PLAYER and OID the state id of his opponent.
@@ -42,7 +42,7 @@ public:
         Array AverageStrategy() const;
 
         // Test if the node is a leaf.
-        bool IsLeaf() const
+        bool isleaf() const
         {
                 return children_.empty();
         }

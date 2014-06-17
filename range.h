@@ -34,7 +34,7 @@ public:
                 const CardSet& dead_cards=CardSet()) const;
 
         string Str() const;
-        size_t Size() const { return range_.size();};
+        size_t size() const { return range_.size();};
 
         struct CSCmp {
                 bool

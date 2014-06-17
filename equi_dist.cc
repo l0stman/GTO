@@ -107,8 +107,8 @@ EquiDist::InitFlopOrTurn(const Range& hero,
                                 ++total;
                         } while (boards.next());
                         if (N > 0) {
-                                SetEquity(*hit, *vit, shares/total);
-                                SetEquity(*vit, *hit, 1-shares/total);
+                                set_equity(*hit, *vit, shares/total);
+                                set_equity(*vit, *hit, 1-shares/total);
                         }
                 }
         }
@@ -142,10 +142,10 @@ EquiDist::InitPreflop(const Range& hero, const Range& villain)
                                 CardSet hc = hit->canonize();
                                 CardSet vc = vit->canonize();
                                 if (hc == vc)
-                                        SetEquity(*hit, *vit, 0.5);
+                                        set_equity(*hit, *vit, 0.5);
                                 else {
                                         std::pair<CardSet,CardSet> p(hc, vc);
-                                        SetEquity(*hit, *vit, equity[p]);
+                                        set_equity(*hit, *vit, equity[p]);
                                 }
                         }
 }
@@ -164,7 +164,7 @@ EquiDist::LUT(const std::vector<CardSet>& hands1,
         Array equity(hands1.size(), hands2.size());
         for (size_t i = 0; i < hands1.size(); i++)
                 for (size_t j = 0; j < hands2.size(); j++)
-                        equity.Set(i, j, Equity(hands1[i], hands2[j]));
+                        equity.set(i, j, Equity(hands1[i], hands2[j]));
         return equity;
 }
 }

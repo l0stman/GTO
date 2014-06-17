@@ -69,7 +69,7 @@ public:
                         EV = info_.stack + info_.pot + info_.raise;
                         break;
                 default:
-                        UtilError(player, Name());
+                        UtilError(player, name());
                         break;
                 }
                 return EV;
@@ -93,16 +93,16 @@ public:
 
                 switch (player) {
                 case GTO::Node::HERO:
-                        EQ = info_.equity.Get(oid, pid);
+                        EQ = info_.equity.get(oid, pid);
                         assert(EQ >= 0);
                         EQ = 1-EQ;
                         break;
                 case GTO::Node::VILLAIN:
-                        EQ = info_.equity.Get(pid, oid);
+                        EQ = info_.equity.get(pid, oid);
                         assert(EQ >= 0);
                         break;
                 default:
-                        UtilError(player, Name());
+                        UtilError(player, name());
                         break;
                 }
                 return EQ*(2*info_.stack+info_.pot);
@@ -132,7 +132,7 @@ public:
                         EV = info_.stack;
                         break;
                 default:
-                        UtilError(player, Name());
+                        UtilError(player, name());
                         break;
                 }
                 return EV;
@@ -162,7 +162,7 @@ public:
                         EV = info_.stack + info_.pot;
                         break;
                 default:
-                        UtilError(player, Name());
+                        UtilError(player, name());
                         break;
                 }
                 return EV;
@@ -188,16 +188,16 @@ public:
 
                 switch (player) {
                 case GTO::Node::HERO:
-                        EQ = info_.equity.Get(oid, pid);
+                        EQ = info_.equity.get(oid, pid);
                         assert(EQ >= 0);
                         EQ = 1-EQ;
                         break;
                 case GTO::Node::VILLAIN:
-                        EQ = info_.equity.Get(pid, oid);
+                        EQ = info_.equity.get(pid, oid);
                         assert(EQ >= 0);
                         break;
                 default:
-                        UtilError(player, Name());
+                        UtilError(player, name());
                         break;
                 }
                 return info_.stack-info_.bet-turn_bet +
@@ -212,21 +212,21 @@ PrintTree(const GTO::Node& node,
           const GTO::Node::Player& player,
           const vector<CardSet>& hands)
 {
-        if (node.IsLeaf())
+        if (node.isleaf())
                 return;
-        const vector<GTO::Node *>& children = node.Children();
-        if (node.ActivePlayer() == player) {
+        const vector<GTO::Node *>& children = node.children();
+        if (node.active_player() == player) {
                 GTO::Array strat = node.AverageStrategy();
-                size_t nstates = strat.NumRows();
-                size_t nactions = strat.NumCols();
+                size_t nstates = strat.num_rows();
+                size_t nactions = strat.num_cols();
                 printf("Hand");
                 for (size_t a = 0; a < nactions; a++)
-                        printf(" | %s", children[a]->Name().c_str());
+                        printf(" | %s", children[a]->name().c_str());
                 putchar('\n');
                 for (size_t s = 0; s < nstates; s++) {
                         printf("%s", hands[s].str().c_str());
                         for (size_t a = 0; a < nactions; a++)
-                                printf(" %.4f", strat.Get(s, a));
+                                printf(" %.4f", strat.get(s, a));
                         putchar('\n');
                 }
         }
@@ -239,26 +239,26 @@ LeafNames(const GTO::Node& node,
           vector<string>& hnames,
           vector<string>& vnames)
 {
-        if (node.IsLeaf())
+        if (node.isleaf())
                 return;
         bool isterm = true;
-        for (auto it = node.Children().begin();
-             it != node.Children().end();
+        for (auto it = node.children().begin();
+             it != node.children().end();
              ++it) {
-                if ((*it)->IsLeaf())
-                        if (node.ActivePlayer() == GTO::Node::HERO)
-                                hnames.push_back((*it)->Name());
+                if ((*it)->isleaf())
+                        if (node.active_player() == GTO::Node::HERO)
+                                hnames.push_back((*it)->name());
                         else
-                                vnames.push_back((*it)->Name());
+                                vnames.push_back((*it)->name());
                 else
                         isterm = false;
                 LeafNames(**it, hnames, vnames);
         }
         if (isterm) {
-                if (node.ActivePlayer() == GTO::Node::HERO)
-                        vnames.push_back(node.Name());
+                if (node.active_player() == GTO::Node::HERO)
+                        vnames.push_back(node.name());
                 else
-                        hnames.push_back(node.Name());
+                        hnames.push_back(node.name());
         }
 }
 
@@ -270,29 +270,29 @@ ProbArrayIter(const GTO::Node& node,
               size_t& idx,
               GTO::Array& probs)
 {
-        if (node.IsLeaf())
+        if (node.isleaf())
                 return;
         GTO::Array strat = node.AverageStrategy();
-        bool isactive = node.ActivePlayer() == player;
+        bool isactive = node.active_player() == player;
         bool isterm = true;
 
-        for (size_t a = 0; a < node.Children().size(); a++) {
-                GTO::Node* c = node.Children()[a];
-                if (c->IsLeaf()) {
+        for (size_t a = 0; a < node.children().size(); a++) {
+                GTO::Node* c = node.children()[a];
+                if (c->isleaf()) {
                         if (isactive)
-                                probs.Set(id, idx++, p*strat.Get(id, a));
+                                probs.set(id, idx++, p*strat.get(id, a));
 
                 } else
                         isterm = false;
                 ProbArrayIter(*c,
                               id,
                               player,
-                              isactive ? p*strat.Get(id, a) : p,
+                              isactive ? p*strat.get(id, a) : p,
                               idx,
                               probs);
         }
         if (isterm && !isactive)
-                probs.Set(id, idx++, p);
+                probs.set(id, idx++, p);
 }
 
 void
@@ -300,7 +300,7 @@ ProbArray(const GTO::Node& node,
           const GTO::Node::Player& player,
           GTO::Array& probs)
 {
-        for (size_t id = 0; id < probs.NumRows(); id++) {
+        for (size_t id = 0; id < probs.num_rows(); id++) {
                 size_t idx = 0;
                 ProbArrayIter(node, id, player, 1.0, idx, probs);
         }
@@ -336,10 +336,10 @@ PrintProbs(const string& player,
                 records.clear();
                 records.reserve(hands.size());
                 for (size_t id = 0; id < hands.size(); id++) {
-                        if (probs.Get(id, n) >= 0.05) {
+                        if (probs.get(id, n) >= 0.05) {
                                 records.push_back(Record(hands[id].str(),
-                                                         probs.Get(id, n)));
-                                total += probs.Get(id, n);
+                                                         probs.get(id, n)));
+                                total += probs.get(id, n);
                         }
                 }
                 sort(records.begin(), records.end());

@@ -391,7 +391,7 @@ vector<CardSet>
 Range::ToVector(const CardSet& board) const
 {
         vector<CardSet> hands;
-        hands.reserve(Size());
+        hands.reserve(size());
         for (auto it = begin(); it != end(); ++it)
                 if (board.disjoint(*it))
                         hands.push_back(*it);
