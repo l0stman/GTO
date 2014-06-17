@@ -21,19 +21,19 @@ public:
         size_t num_rows() const { return nrows_; }
         size_t num_cols() const { return ncols_; }
 
-        double get(size_t row, size_t col) const
+        double get(const size_t& row, const size_t& col) const
         {
                 assert(row < nrows_ && col < ncols_);
                 return vect_[row*ncols_+col];
         }
 
-        void set(size_t row, size_t col, double val)
+        void set(const size_t& row, const size_t& col, const double& val)
         {
                 assert(row < nrows_ && col < ncols_);
                 vect_[row*ncols_+col] = val;
         }
 
-        void inc(size_t row, size_t col, double val)
+        void inc(const size_t& row, const size_t& col, const double& val)
         {
                 assert(row < nrows_ && col < ncols_);
                 vect_[row*ncols_+col] += val;
