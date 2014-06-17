@@ -1,7 +1,6 @@
 #ifndef GTO_CFR_H_
 #define GTO_CFR_H_
 
-#include <cassert>
 #include <cstdio>
 #include <cstdlib>
 #include <string>

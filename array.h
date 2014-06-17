@@ -1,6 +1,7 @@
 #ifndef GTO_ARRAY_H_
 #define GTO_ARRAY_H_
 
+#include <cassert>
 #include <vector>
 
 namespace GTO {
