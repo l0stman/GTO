@@ -1,10 +1,12 @@
 #ifndef GTO_EQUI_DIST_H_
 #define GTO_EQUI_DIST_H_
 
-#include "range.h"
-
 #include <unordered_map>
 #include <utility>
+#include <vector>
+
+#include "array.h"
+#include "range.h"
 
 namespace GTO {
 
@@ -16,8 +18,12 @@ public:
 
         // Return the equity of hero's hand against villain's or -1 if
         // it doesn't exit.
-        virtual double Equity(const CardSet& hero, const CardSet& vill) const;
+        double Equity(const CardSet& hero, const CardSet& vill) const;
 
+        // Return a lookup table represented as an array such that
+        // Array.Get(i, j) == Equity(hands1[i], hands2[j]).
+        Array LUT(const std::vector<CardSet>& hands1,
+                  const std::vector<CardSet>& hands2) const;
 private:
         void InitRiver(const Range& hero,
                        const Range& villain,

@@ -35,16 +35,9 @@ struct GameInfo {
                   raise(raise),
                   vill_hands(vill.ToVector(board)),
                   hero_hands(hero.ToVector(board)),
-                  equity(GTO::Array(vill_hands.size(), hero_hands.size()))
-        {
-                GTO::EquiDist ED(vill, hero, board);
-                for (size_t v = 0; v < vill_hands.size(); v++)
-                        for (size_t h = 0; h < hero_hands.size(); h++)
-                                equity.Set(v,
-                                           h,
-                                           ED.Equity(vill_hands[v],
-                                                     hero_hands[h]));
-        }
+                  equity(GTO::EquiDist(
+                                 vill, hero, board).LUT(vill_hands,hero_hands))
+        {}
 };
 
 void

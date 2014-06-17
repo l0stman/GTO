@@ -157,4 +157,15 @@ double EquiDist::Equity(const CardSet& hero, const CardSet& villain) const
 
         return equity_.count(p) > 0 ? equity_.at(p) : -1;
 }
+
+Array
+EquiDist::LUT(const std::vector<CardSet>& hands1,
+              const std::vector<CardSet>& hands2) const
+{
+        Array equity(hands1.size(), hands2.size());
+        for (size_t i = 0; i < hands1.size(); i++)
+                for (size_t j = 0; j < hands2.size(); j++)
+                        equity.Set(i, j, Equity(hands1[i], hands2[j]));
+        return equity;
+}
 }
