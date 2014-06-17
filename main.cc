@@ -27,6 +27,7 @@ RangeToVector(const GTO::Range& r, const CardSet& board)
 struct GameInfo {
         const double stack;
         const double pot;
+        const double bet;
         const double raise;
         const vector<CardSet> vill_hands;
         const vector<CardSet> hero_hands;
@@ -34,12 +35,14 @@ struct GameInfo {
 
         explicit GameInfo(const double& stack,
                           const double& pot,
+                          const double& bet,
                           const double& raise,
                           const CardSet& board,
                           const GTO::Range& vill,
                           const GTO::Range& hero)
                 : stack(stack),
                   pot(pot),
+                  bet(bet),
                   raise(raise),
                   vill_hands(RangeToVector(vill, board)),
                   hero_hands(RangeToVector(hero, board)),
@@ -182,6 +185,41 @@ public:
                 return EV;
         }
 
+private:
+        const GameInfo& info_;
+};
+
+class HeroFlatCall : public GTO::Leaf {
+public:
+        explicit HeroFlatCall(const string& name, const GameInfo& info)
+                : GTO::Leaf(name), info_(info)
+        {}
+
+        double Utility(const Player& player,
+                       const size_t& pid,
+                       const size_t& oid) const
+        {
+                double turn_pot = info_.pot + 2*info_.bet;
+                double turn_bet = 2.0/3*turn_pot;
+                double EQ = 0;
+
+                switch (player) {
+                case GTO::Node::HERO:
+                        EQ = info_.equity.Get(oid, pid);
+                        assert(EQ >= 0);
+                        EQ = 1-EQ;
+                        break;
+                case GTO::Node::VILLAIN:
+                        EQ = info_.equity.Get(pid, oid);
+                        assert(EQ >= 0);
+                        break;
+                default:
+                        UtilError(player, Name());
+                        break;
+                }
+                return info_.stack-info_.bet-turn_bet +
+                        EQ*(turn_pot + 2*turn_bet);
+        }
 private:
         const GameInfo& info_;
 };
@@ -368,12 +406,13 @@ Deal(const GameInfo& info,
 void
 Simulate(const double& stack,
          const double& pot,
+         const double& bet,
          const double& raise,
          const CardSet& board,
          const GTO::Range& vill,
          const GTO::Range& hero)
 {
-        GameInfo info(stack, pot, raise, board, vill, hero);
+        GameInfo info(stack, pot, bet, raise, board, vill, hero);
         size_t vsize = info.vill_hands.size();
         size_t hsize = info.hero_hands.size();
         vector<GTO::Node *> shove_children = {
@@ -389,6 +428,7 @@ Simulate(const double& stack,
         };
         vector<GTO::Node *> root_children = {
                 new HeroFold("Folding", info),
+                new HeroFlatCall("Flat calling", info),
                 new GTO::ParentNode("Raising",
                                     GTO::Node::VILLAIN,
                                     vsize,
@@ -400,7 +440,7 @@ Simulate(const double& stack,
                              root_children);
         double vutil = 0.0;
         double hutil = 0.0;
-        size_t niter = 50000000;
+        size_t niter = 40000000;
         size_t hero_id = 0;
         size_t vill_id = 0;
         std::random_device rd;
@@ -430,7 +470,7 @@ main(int argc, char *argv[])
 {
         GTO::Range vill("74,75,54,6d5d,77,44,55,88,63,86,Ad7h,Ad7c,Ad7s,Kd7h,Kd7c,Kd7s,Ad6h,Ad6c,Ad6s,Kd6h,Kd6c,Kd6s,3d2d,6d2d,9d6d,Td6d,Jd6d,Qd6d,Kd6d,Ad6d,Ad8d,Kd8d,Ad3d,Kd3d");
         GTO::Range hero("77-22,ATs-A2s,K2s+,Q7s+,J8s+,T8s+,97s+,86s+,75s+,64s+,53s+,42s+,32s,ATo-A8o,K9o+,QTo+,JTo");
-        Simulate(4135, 550, 500, pokerstove::CardSet("7d4d5h"), vill, hero);
+        Simulate(4135, 550, 250, 825, pokerstove::CardSet("7d4d5h"), vill, hero);
 
         return 0;
 }
