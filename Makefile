@@ -1,6 +1,6 @@
 CC		= c++ -std=c++11
-#CXXFLAGS	= -O3 -Wall -pedantic -DNDEBUG			# Production use
-CXXFLAGS	= -O0 -Wall -pedantic -g3			# Debug mode
+CXXFLAGS	= -O3 -Wall -pedantic -DNDEBUG			# Production use
+#CXXFLAGS	= -O0 -Wall -pedantic -g3			# Debug mode
 #CXXFLAGS	= -O3 -Wall -pedantic -DNDEBUG -g3		# Profiling mode
 PREF		= ${HOME}/hacks/poker/pokerstove/src
 LIBDIRS		= -L /usr/local/lib -L $(PREF)/build/lib/pokerstove/peval

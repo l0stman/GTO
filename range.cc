@@ -343,24 +343,6 @@ Range::Range(const string& in)
                 }
 }
 
-bool
-Range::IsMember(const Hand& hand) const
-{
-        return range_.count(hand) > 0;
-}
-
-void
-Range::Add(const Hand& hand)
-{
-        range_.insert(hand);
-}
-
-void
-Range::Remove(const Hand& hand)
-{
-        range_.erase(hand);
-}
-
 void
 Range::Fill(const CardSet& dead_cards)
 {
@@ -391,7 +373,7 @@ vector<Hand>
 Range::ToVector(const CardSet& board) const
 {
         vector<Hand> hands;
-        hands.reserve(size());
+        hands.reserve(Size());
         for (auto it = begin(); it != end(); ++it)
                 if (board.disjoint(*it))
                         hands.push_back(*it);
@@ -414,4 +396,4 @@ Range::Str() const
                 }
         return s;
 }
-}
+} // namespace GTO
