@@ -65,7 +65,7 @@ struct hash<GTO::Hand> {
         size_t
         operator()(const GTO::Hand& h) const
         {
-                return std::hash<uint64_t>()(h.mask());
+                return hash<uint64_t>()(h.mask());
         }
 };
 } // namespace std
