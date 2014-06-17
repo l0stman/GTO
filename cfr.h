@@ -14,7 +14,7 @@ using std::vector;
 // Represents a two-dimensional array of doubles.
 class Array {
 public:
-        Array() : nrows_(0), ncols_(0) {}
+        Array() : vect_(vector<double>(0)), nrows_(0), ncols_(0) {}
 
         Array(size_t nrows, size_t ncols, double init=0.0)
                 : vect_(vector<double>(nrows*ncols, init)),
