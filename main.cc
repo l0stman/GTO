@@ -12,7 +12,6 @@
 
 namespace {
 using std::vector;
-using pokerstove::CardSet;
 using std::string;
 
 struct GameInfo {
@@ -20,15 +19,15 @@ struct GameInfo {
         const double pot;
         const double bet;
         const double raise;
-        const vector<CardSet> vill_hands;
-        const vector<CardSet> hero_hands;
+        const vector<GTO::Hand> vill_hands;
+        const vector<GTO::Hand> hero_hands;
         GTO::Array equity;
 
         explicit GameInfo(const double& stack,
                           const double& pot,
                           const double& bet,
                           const double& raise,
-                          const CardSet& board,
+                          const pokerstove::CardSet& board,
                           const GTO::Range& vill,
                           const GTO::Range& hero)
                 : stack(stack),
@@ -210,7 +209,7 @@ private:
 void
 PrintTree(const GTO::Node& node,
           const GTO::Node::Player& player,
-          const vector<CardSet>& hands)
+          const vector<GTO::Hand>& hands)
 {
         if (node.isleaf())
                 return;
@@ -322,7 +321,7 @@ struct Record {
 
 void
 PrintProbs(const string& player,
-           const vector<CardSet>& hands,
+           const vector<GTO::Hand>& hands,
            const GTO::Array& probs,
            const vector<string>& names,
            const double& util)
@@ -355,8 +354,8 @@ void
 PrintNode(const GTO::Node& root,
           const double& hutil,
           const double& vutil,
-          const vector<CardSet>& hhands,
-          const vector<CardSet>& vhands)
+          const vector<GTO::Hand>& hhands,
+          const vector<GTO::Hand>& vhands)
 {
         vector<string> hnames;
         vector<string> vnames;
@@ -391,7 +390,7 @@ Simulate(const double& stack,
          const double& pot,
          const double& bet,
          const double& raise,
-         const CardSet& board,
+         const pokerstove::CardSet& board,
          const GTO::Range& vill,
          const GTO::Range& hero)
 {

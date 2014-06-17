@@ -45,7 +45,7 @@ EquiDist::InitRiver(const Range& hero,
 {
         boost::shared_ptr<PokerHandEvaluator> E(PokerHandEvaluator::alloc("h"));
         PokerEvaluation he, ve;
-        std::pair<CardSet, CardSet> p;
+        PairHands p;
 
         for (auto hit = hero.begin(); hit != hero.end(); ++hit) {
                 if (hit->intersects(board))
@@ -122,44 +122,49 @@ EquiDist::InitPreflop(const Range& hero, const Range& villain)
         char v[4];
         double EQh = 0;
         double EQv = 0;
-        EQTable equity;
+        std::unordered_map<PairHands, double> equity;
 
         if ((fp = fopen(preflop_file_, "r")) == NULL)
                 err::sys("Can't open %s", preflop_file_);
         while (fscanf(fp, "%s vs. %s : %lf vs. %lf", h, v, &EQh, &EQv)!=EOF) {
                 Range hr(h);
                 Range vr(v);
-                CardSet hc = hr.begin()->canonize();
-                CardSet vc = vr.begin()->canonize();
-                equity[std::pair<CardSet,CardSet>(hc, vc)] = EQh;
-                equity[std::pair<CardSet,CardSet>(vc, hc)] = EQv;
+                Hand hc = *hr.begin();
+                Hand vc = *vr.begin();
+                hc.canonize();
+                vc.canonize();
+                equity[PairHands(hc, vc)] = EQh;
+                equity[PairHands(vc, hc)] = EQv;
         }
         fclose(fp);
 
         for (auto hit = hero.begin(); hit != hero.end(); ++hit)
                 for (auto vit = villain.begin(); vit != villain.end(); ++vit)
                         if (hit->disjoint(*vit)) {
-                                CardSet hc = hit->canonize();
-                                CardSet vc = vit->canonize();
+                                Hand hc = *hit;
+                                Hand vc = *vit;
+                                hit->canonize();
+                                vit->canonize();
                                 if (hc == vc)
                                         set_equity(*hit, *vit, 0.5);
-                                else {
-                                        std::pair<CardSet,CardSet> p(hc, vc);
-                                        set_equity(*hit, *vit, equity[p]);
-                                }
+                                else
+                                        set_equity(*hit,
+                                                   *vit,
+                                                   equity[PairHands(hc, vc)]);
+
                         }
 }
 
-double EquiDist::Equity(const CardSet& hero, const CardSet& villain) const
+double EquiDist::Equity(const Hand& hero, const Hand& villain) const
 {
-        std::pair<CardSet, CardSet> p(hero, villain);
+        PairHands p(hero, villain);
 
         return equity_.count(p) > 0 ? equity_.at(p) : -1;
 }
 
 Array
-EquiDist::LUT(const std::vector<CardSet>& hands1,
-              const std::vector<CardSet>& hands2) const
+EquiDist::LUT(const std::vector<Hand>& hands1,
+              const std::vector<Hand>& hands2) const
 {
         Array equity(hands1.size(), hands2.size());
         for (size_t i = 0; i < hands1.size(); i++)

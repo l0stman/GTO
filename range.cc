@@ -64,7 +64,7 @@ Range::AddSuited(const string& s, const size_t& pos)
         for (size_t i = 0; i < kSuits.length(); i++) {
                 h[1] = kSuits[i];
                 h[3] = kSuits[i];
-                range_.insert(CardSet(h));
+                range_.insert(Hand(h));
         }
 }
 
@@ -80,7 +80,7 @@ Range::AddOffsuit(const string& s, const size_t& pos)
                         if (i != j) {
                                 h[1] = kSuits[i];
                                 h[3] = kSuits[j];
-                                range_.insert(CardSet(h));
+                                range_.insert(Hand(h));
                         }
 }
 
@@ -98,7 +98,7 @@ Range::AddSuitedPlus(const string& s, const size_t& pos)
                 for (size_t j = 0; j < kSuits.length(); ++j) {
                         h[1] = kSuits[j];
                         h[3] = kSuits[j];
-                        range_.insert(CardSet(h));
+                        range_.insert(Hand(h));
                 }
         }
 }
@@ -119,7 +119,7 @@ Range::AddOffsuitPlus(const string& s, const size_t& pos)
                                 if (j != k) {
                                         h[1] = kSuits[j];
                                         h[3] = kSuits[k];
-                                        range_.insert(CardSet(h));
+                                        range_.insert(Hand(h));
                                 }
         }
 }
@@ -141,7 +141,7 @@ Range::AddSuitedRange(const string& s, const size_t& pos)
                 for (size_t j = 0; j < kSuits.length(); ++j) {
                         h[1] = kSuits[j];
                         h[3] = kSuits[j];
-                        range_.insert(CardSet(h));
+                        range_.insert(Hand(h));
                 }
         }
 }
@@ -165,7 +165,7 @@ Range::AddOffsuitRange(const string& s, const size_t& pos)
                                 if (j != k) {
                                         h[1] = kSuits[j];
                                         h[3] = kSuits[k];
-                                        range_.insert(CardSet(h));
+                                        range_.insert(Hand(h));
                                 }
         }
 }
@@ -216,7 +216,7 @@ Range::AddSingleSuitRange(const string& s, const size_t& pos)
         h[3] = s[1];
         for (size_t i = p.first; i<=p.second; ++i) {
                 h[2] = kRanks[i];
-                range_.insert(h);
+                range_.insert(Hand(h));
         }
 }
 
@@ -232,7 +232,7 @@ Range::AddSingleSuitPlus(const string& s, const size_t& pos)
         h[3] = s[pos+1];
         for (size_t i = p.first; i < p.second; ++i) {
                 h[2] = kRanks[i];
-                range_.insert(h);
+                range_.insert(Hand(h));
         }
 }
 
@@ -291,7 +291,7 @@ Range::Range(const string& in)
                                          IsSuit(s[first+1]) &&
                                          IsSuit(s[first+3]))
                                         range_.insert(
-                                                CardSet(s.substr(first, len)));
+                                                Hand(s.substr(first, len)));
                                 else
                                         FmtError(s.substr(first, len));
                                 break;
@@ -344,19 +344,19 @@ Range::Range(const string& in)
 }
 
 bool
-Range::IsMember(const CardSet& hand) const
+Range::IsMember(const Hand& hand) const
 {
         return range_.count(hand) > 0;
 }
 
 void
-Range::Add(const CardSet& hand)
+Range::Add(const Hand& hand)
 {
         range_.insert(hand);
 }
 
 void
-Range::Remove(const CardSet& hand)
+Range::Remove(const Hand& hand)
 {
         range_.erase(hand);
 }
@@ -373,7 +373,7 @@ Range::Fill(const CardSet& dead_cards)
                         c1[1] = kSuits[s1];
                         for (size_t r2 = 0; r2 < kRanks.length(); r2++)
                                 for (size_t s2 = 0; s2<kSuits.length(); s2++) {
-                                        CardSet hand(c1);
+                                        Hand hand(c1);
                                         c2[0] = kRanks[r2];
                                         c2[1] = kSuits[s2];
                                         CardSet C(c2);
@@ -387,10 +387,10 @@ Range::Fill(const CardSet& dead_cards)
                 }
 }
 
-vector<CardSet>
+vector<Hand>
 Range::ToVector(const CardSet& board) const
 {
-        vector<CardSet> hands;
+        vector<Hand> hands;
         hands.reserve(size());
         for (auto it = begin(); it != end(); ++it)
                 if (board.disjoint(*it))
@@ -402,7 +402,7 @@ string
 Range::Str() const
 {
         string s;
-        std::set<CardSet,CSCmp> r(range_.begin(), range_.end());
+        std::set<Hand> r(range_.begin(), range_.end());
         auto it = r.begin();
 
         if (it != r.end())
