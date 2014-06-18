@@ -1,7 +1,8 @@
 #include "cfr.h"
 
 namespace GTO {
-Array Node::AverageStrategy() const
+Array
+Node::AverageStrategy() const
 {
         if (isleaf())
                 return Array();
@@ -19,12 +20,13 @@ Array Node::AverageStrategy() const
         return avg;
 }
 
-double Node::CFR(Node* node,
-                 const Player& player,
-                 const size_t& pid,
-                 const size_t& oid,
-                 const double& pprob,
-                 const double& oprob)
+double
+Node::CFR(Node* node,
+          const Player& player,
+          const size_t& pid,
+          const size_t& oid,
+          const double& pprob,
+          const double& oprob)
 {
         if (node->isleaf())
                 return node->Utility(player, pid, oid);
@@ -71,4 +73,5 @@ double Node::CFR(Node* node,
         }
         return util;
 }
-}
+} // namespace GTO
+

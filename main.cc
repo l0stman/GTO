@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "cfr.h"
+#include "cfr-inl.h"
 #include "err.h"
 #include "equi_dist.h"
 #include "range.h"
@@ -205,33 +206,6 @@ public:
 private:
         const GameInfo& info_;
 };
-
-void
-PrintTree(const GTO::Node& node,
-          const GTO::Node::Player& player,
-          const vector<GTO::Hand>& hands)
-{
-        if (node.isleaf())
-                return;
-        const vector<GTO::Node *>& children = node.children();
-        if (node.active_player() == player) {
-                GTO::Array strat = node.AverageStrategy();
-                size_t nstates = strat.num_rows();
-                size_t nactions = strat.num_cols();
-                printf("Hand");
-                for (size_t a = 0; a < nactions; a++)
-                        printf(" | %s", children[a]->name().c_str());
-                putchar('\n');
-                for (size_t s = 0; s < nstates; s++) {
-                        printf("%s", hands[s].str().c_str());
-                        for (size_t a = 0; a < nactions; a++)
-                                printf(" %.4f", strat.get(s, a));
-                        putchar('\n');
-                }
-        }
-        for (auto it = children.begin(); it != children.end(); ++it)
-                PrintTree(**it, player, hands);
-}
 
 void
 LeafNames(const GTO::Node& node,
