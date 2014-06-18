@@ -45,7 +45,7 @@ public:
         virtual void Add(const Hand& hand) = 0;
         // Remove HAND from the range.
         virtual void Remove(const Hand& hand) = 0;
-        // Add all possible hands to the range except those who
+        // Add all possible hands to the range except those that
         // conflict with DEAD_CARDS.
         virtual void Fill(const CardSet& dead_cards=CardSet()) = 0;
         // Return a vector of all the hands in the range that don't
