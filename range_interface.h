@@ -39,21 +39,27 @@ public:
 
 class RangeInterface {
 public:
-        // Test if HAND is a member of the range.
+        // Test if "hand" is a member of the range.
         virtual bool IsMember(const Hand& hand) const = 0;
-        // Add HAND to the range.
+
+        // Add "hand" to the range.
         virtual void Add(const Hand& hand) = 0;
-        // Remove HAND from the range.
+
+        // Remove "hand" from the range.
         virtual void Remove(const Hand& hand) = 0;
+
         // Add all possible hands to the range except those that
-        // conflict with DEAD_CARDS.
+        // conflict with "dead_cards".
         virtual void Fill(const CardSet& dead_cards=CardSet()) = 0;
+
         // Return a vector of all the hands in the range that don't
-        // conflict with DEAD_CARDS.
+        // conflict with "dead_cards".
         virtual vector<Hand> ToVector(
                 const CardSet& dead_cards=CardSet()) const = 0;
+
         // Return the number of hands in the range.
         virtual size_t Size() const = 0;
+
         // Return a string representing the range.
         virtual std::string Str() const = 0;
 };

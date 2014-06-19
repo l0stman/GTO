@@ -26,8 +26,8 @@ public:
         const Player& active_player() const { return active_player_; }
         const vector<Node *>& children() const { return children_; }
 
-        // Return the utility of PLAYER at a leaf node. PID is the
-        // stade id of PLAYER and OID the state id of his opponent.
+        // Return the utility of "player" at a leaf node. "pid" is the
+        // stade id of "player" and "oid" the state id of his opponent.
         virtual double Utility(const Player& player,
                                const size_t& pid,
                                const size_t& oid) const = 0;
@@ -47,10 +47,10 @@ public:
                 return children_.empty();
         }
 
-        // Return the utility at the current node of a given PLAYER
+        // Return the utility at the current node of a given "player"
         // using the counterfactual regret minimization algorithm to
-        // update the game tree under node.  PID is the state id of
-        // PLAYER and OID the state id of his opponent.
+        // update the game tree under node.  "pid" is the state id of
+        // "player" and "oid" the state id of his opponent.
         double CFR(const Player& player, const size_t& pid, const size_t& oid)
         {
                 return CFR(this, player, pid, oid, 1.0, 1.0);
@@ -103,8 +103,8 @@ protected:
 
 private:
         // The public method is just a thin wrapper around this one.
-        // PPROB and OPROB are the reaching probabilities of NODE for
-        // PLAYER and his opponent respectively.
+        // "pprob" and "oprob" are the reaching probabilities of "node" for
+        // "player" and his opponent respectively.
         double CFR(Node* node,
                    const Player& player,
                    const size_t& pid,
@@ -123,12 +123,12 @@ private:
 
 class ParentNode : public Node {
 public:
-        // Create a new Node with name NAME and an active player
-        // ACTIVE_PLAYER. CHILDREN is a non-empty vector of nodes that
-        // are the children of the current one.  NUM_STATES is the
+        // Create a new Node with name "name" and an active player
+        // "active_player". "children" is a non-empty vector of nodes that
+        // are the children of the current one.  "num_states" is the
         // number of possible states of the active player at the given
         // node.  Each state is referred to by an unique id between 0
-        // and NUM_STATES-1.
+        // and "num_states"-1.
         explicit ParentNode(const string& name,
                             const Player& active_player,
                             const size_t& nstates,
@@ -160,7 +160,7 @@ of nodes.", name.c_str());
 
 class Leaf : public Node {
 public:
-        // Create a leaf node with name NAME. The node should
+        // Create a leaf node with name "name". The node should
         // implement the Utility method.
         explicit Leaf(const string& name)
                 : Node(name,
