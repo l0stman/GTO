@@ -1,5 +1,42 @@
 #include "cfr.h"
 
+namespace {
+
+void
+GetProbsAux(const GTO::Node& node,
+            const size_t& id,
+            const GTO::Node::Player& player,
+            const double& p,
+            size_t& idx,
+            GTO::Array& probs)
+{
+        if (node.isleaf())
+                return;
+        GTO::Array strat = node.AverageStrategy();
+        bool isactive = node.active_player() == player;
+        bool isterm = true;
+
+        for (size_t a = 0; a < node.children().size(); a++) {
+                GTO::Node* c = node.children()[a];
+                if (c->isleaf()) {
+                        if (isactive)
+                                probs.set(id, idx++, p*strat.get(id, a));
+
+                } else
+                        isterm = false;
+                GetProbsAux(*c,
+                            id,
+                            player,
+                            isactive ? p*strat.get(id, a) : p,
+                            idx,
+                            probs);
+        }
+        if (isterm && !isactive)
+                probs.set(id, idx++, p);
+}
+
+} // namespace
+
 namespace GTO {
 Array
 Node::AverageStrategy() const
@@ -73,5 +110,43 @@ Node::CFR(Node* node,
         }
         return util;
 }
+
+void
+Node::GetFinalActionNames(const Node& node,
+                          vector<string>& hero_names,
+                          vector<string>& vill_names)
+{
+        if (node.isleaf())
+                return;
+        bool isterm = true;
+        for (auto it = node.children().begin();
+             it != node.children().end();
+             ++it) {
+                if ((*it)->isleaf())
+                        if (node.active_player() == GTO::Node::HERO)
+                                hero_names.push_back((*it)->name());
+                        else
+                                vill_names.push_back((*it)->name());
+                else
+                        isterm = false;
+                GetFinalActionNames(**it, hero_names, vill_names);
+        }
+        if (isterm) {
+                if (node.active_player() == GTO::Node::HERO)
+                        vill_names.push_back(node.name());
+                else
+                        hero_names.push_back(node.name());
+        }
+}
+
+void
+Node::GetFinalActionProbs(const Node& node, const Player& player, Array& probs)
+{
+        for (size_t id = 0; id < probs.num_rows(); id++) {
+                size_t idx = 0;
+                GetProbsAux(node, id, player, 1.0, idx, probs);
+        }
+}
+
 } // namespace GTO
 

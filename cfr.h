@@ -56,6 +56,28 @@ public:
                 return CFR(this, player, pid, oid, 1.0, 1.0);
         }
 
+        // For each player, get the names of the nodes under "node"
+        // where the player is last active before the game terminates.
+        // Those corresponding to HERO are appended to "hero_names"
+        // and those corresponding to villain to "vill_hands".
+        static void
+        GetFinalActionNames(const Node& node,
+                            vector<string>& hero_names,
+                            vector<string>& vill_names);
+
+        // Get the probabilities of taking each possible final action
+        // for "player" under "node".  The result is stored in "probs"
+        // which is Array of size N x M where N is the number of
+        // possible states for "player" and M is the number of
+        // possible final actions returned by GetFinalActionNames
+        // taken by the player under "node".  Thus probs.get(i, j) is
+        // the probability that "player" would take the final action
+        // number j if his state id is i.
+        static void
+        GetFinalActionProbs(const Node& node,
+                            const Player& player,
+                            Array& probs);
+
 protected:
         explicit Node(const string& name,
                       const Player& active_player,
