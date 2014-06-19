@@ -11,14 +11,14 @@ LDFLAGS		= -Wl,-Bstatic $(STATIC_LIBS) -Wl,-Bdynamic $(DYNAM_LIBS)
 
 INCLUDES	= -I /usr/local/include -I $(PREF)/lib
 OBJS		= main.o range.o equi_dist.o cfr.o err.o
-PROGNAME	= 5bet
+PROGNAME	= 3bet
 
 $(PROGNAME) : $(OBJS)
-	$(CC) $(LIBDIRS) -o $(.TARGET) $(.ALLSRC) $(LDFLAGS)
+	$(CC) $(LIBDIRS) -o $(PROGNAME) $(OBJS) $(LDFLAGS)
 
 .SUFFIXES : .o .cc
 .cc.o :
-	$(CC) $(CXXFLAGS) $(INCLUDES) -c $(.IMPSRC)
+	$(CC) $(CXXFLAGS) $(INCLUDES) -c $<
 
 depend:
 	$(CC) $(INCLUDES) -E -MM *.cc > .depend
