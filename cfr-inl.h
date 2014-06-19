@@ -12,7 +12,7 @@ namespace GTO {
 // "player". "states" is a vector containing all the possible states
 // for the given player.  Thus, the state id varies between 0 and
 // states.size()-1.  "state_name" is the chosen name of each the state.
-// REQUIRES: the State class should have a str() method that returns a
+// REQUIRES: the State class should have a ToString() method that returns a
 // string representing it.
 template<class State>
 void
@@ -33,7 +33,7 @@ TreePrint(const Node& node,
                         printf(" | %s", children[a]->name().c_str());
                 putchar('\n');
                 for (size_t s = 0; s < nstates; s++) {
-                        printf("%s", states[s].str().c_str());
+                        printf("%s", states[s].ToString().c_str());
                         for (size_t a = 0; a < nactions; a++)
                                 printf(" %.4f", strat.get(s, a));
                         putchar('\n');
@@ -73,7 +73,7 @@ struct Record {
 // states of "player" during the game. "names" is vector nodes
 // returned by GetFinalActionNames for the player. "state_name" is the
 // generic name of each state.
-// REQUIRES: the State class should have a str() method that returns a
+// REQUIRES: the State class should have a ToString() method that returns a
 // string representing it.
 template<class State>
 void
@@ -94,7 +94,7 @@ FlatPrint(const Node& root,
                 records.reserve(names.size());
                 for (size_t id = 0; id < states.size(); id++) {
                         if (probs.get(id, n) >= 0.05) {
-                                records.push_back(Record(states[id].str(),
+                                records.push_back(Record(states[id].ToString(),
                                                          probs.get(id, n)));
                                 total += probs.get(id, n);
                         }

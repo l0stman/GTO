@@ -26,7 +26,7 @@ public:
         virtual void Fill(const CardSet& dead_cards=CardSet());
         virtual vector<Hand> ToVector(
                 const CardSet& dead_cards=CardSet()) const;
-        virtual string Str() const;
+        virtual string ToString() const;
         virtual size_t Size() const { return range_.size(); }
 
         typedef std::unordered_set<Hand>::const_iterator const_iterator;

@@ -381,7 +381,7 @@ Range::ToVector(const CardSet& board) const
 }
 
 string
-Range::Str() const
+Range::ToString() const
 {
         string s;
         std::set<Hand> r(range_.begin(), range_.end());

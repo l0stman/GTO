@@ -35,6 +35,8 @@ public:
                 return c1[t1] < c2[t2] ||
                                 (c1[t1] == c2[t2] && c1[1-t1]<c2[1-t2]);
         }
+
+        std::string ToString() const { return str(); }
 };
 
 class RangeInterface {
@@ -61,7 +63,7 @@ public:
         virtual size_t Size() const = 0;
 
         // Return a string representing the range.
-        virtual std::string Str() const = 0;
+        virtual std::string ToString() const = 0;
 };
 } // namespace GTO
 
