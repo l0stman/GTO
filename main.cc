@@ -208,142 +208,6 @@ private:
 };
 
 void
-LeafNames(const GTO::Node& node,
-          vector<string>& hnames,
-          vector<string>& vnames)
-{
-        if (node.isleaf())
-                return;
-        bool isterm = true;
-        for (auto it = node.children().begin();
-             it != node.children().end();
-             ++it) {
-                if ((*it)->isleaf())
-                        if (node.active_player() == GTO::Node::HERO)
-                                hnames.push_back((*it)->name());
-                        else
-                                vnames.push_back((*it)->name());
-                else
-                        isterm = false;
-                LeafNames(**it, hnames, vnames);
-        }
-        if (isterm) {
-                if (node.active_player() == GTO::Node::HERO)
-                        vnames.push_back(node.name());
-                else
-                        hnames.push_back(node.name());
-        }
-}
-
-void
-ProbArrayIter(const GTO::Node& node,
-              const size_t& id,
-              const GTO::Node::Player& player,
-              const double& p,
-              size_t& idx,
-              GTO::Array& probs)
-{
-        if (node.isleaf())
-                return;
-        GTO::Array strat = node.AverageStrategy();
-        bool isactive = node.active_player() == player;
-        bool isterm = true;
-
-        for (size_t a = 0; a < node.children().size(); a++) {
-                GTO::Node* c = node.children()[a];
-                if (c->isleaf()) {
-                        if (isactive)
-                                probs.set(id, idx++, p*strat.get(id, a));
-
-                } else
-                        isterm = false;
-                ProbArrayIter(*c,
-                              id,
-                              player,
-                              isactive ? p*strat.get(id, a) : p,
-                              idx,
-                              probs);
-        }
-        if (isterm && !isactive)
-                probs.set(id, idx++, p);
-}
-
-void
-ProbArray(const GTO::Node& node,
-          const GTO::Node::Player& player,
-          GTO::Array& probs)
-{
-        for (size_t id = 0; id < probs.num_rows(); id++) {
-                size_t idx = 0;
-                ProbArrayIter(node, id, player, 1.0, idx, probs);
-        }
-}
-
-struct Record {
-        string hand;
-        double prob;
-
-        explicit Record(const string& hand, const double& prob)
-                : hand(hand), prob(prob)
-        {}
-
-        bool operator<(const Record& rhs) const
-        {
-                return rhs.prob < prob;
-        }
-};
-
-void
-PrintProbs(const string& player,
-           const vector<GTO::Hand>& hands,
-           const GTO::Array& probs,
-           const vector<string>& names,
-           const double& util)
-{
-        vector<Record> records;
-        double total = 0.0;
-
-        printf("%s: %.4f\n", player.c_str(), util);
-        for (size_t n = 0; n < names.size(); n++) {
-                total = 0.0;
-                records.clear();
-                records.reserve(hands.size());
-                for (size_t id = 0; id < hands.size(); id++) {
-                        if (probs.get(id, n) >= 0.05) {
-                                records.push_back(Record(hands[id].str(),
-                                                         probs.get(id, n)));
-                                total += probs.get(id, n);
-                        }
-                }
-                sort(records.begin(), records.end());
-                printf("%s range: %.2f hand%c\n", names[n].c_str(), total,
-                       total == 1 ? ' ' : 's');
-                printf("Hand\tProb\n");
-                for (auto it = records.begin(); it != records.end(); ++it)
-                        printf("%s\t%.4f\n", it->hand.c_str(), it->prob);
-        }
-}
-
-void
-PrintNode(const GTO::Node& root,
-          const double& hutil,
-          const double& vutil,
-          const vector<GTO::Hand>& hhands,
-          const vector<GTO::Hand>& vhands)
-{
-        vector<string> hnames;
-        vector<string> vnames;
-        LeafNames(root, hnames, vnames);
-        GTO::Array hprobs(hhands.size(), hnames.size());
-        GTO::Array vprobs(vhands.size(), vnames.size());
-        ProbArray(root, GTO::Node::HERO, hprobs);
-        ProbArray(root, GTO::Node::VILLAIN, vprobs);
-        PrintProbs("SB", vhands, vprobs, vnames, vutil);
-        putchar('\n');
-        PrintProbs("CO", hhands, hprobs, hnames, hutil);
-}
-
-void
 Deal(const GameInfo& info,
      std::mt19937& generator,
      std::uniform_int_distribution<size_t>& hdist,
@@ -412,11 +276,15 @@ Simulate(const double& stack,
                         fprintf(stderr, "%d Villain: %.8f, Hero: %.8f\n",
                                 i, vutil/i, hutil/i);
         }
-        PrintNode(root,
-                  hutil/niter,
-                  vutil/niter,
-                  info.hero_hands,
-                  info.vill_hands);
+        hutil /= niter;
+        vutil /= niter;
+        vector<string> hnames;
+        vector<string> vnames;
+        GTO::Node::GetFinalActionNames(root, hnames, vnames);
+        printf("SB: %.4f\n" , vutil);
+        GTO::FlatPrint(root, GTO::Node::VILLAIN, info.vill_hands,vnames,"Hand");
+        printf("\nCO: %.4f\n" , hutil);
+        GTO::FlatPrint(root, GTO::Node::HERO, info.hero_hands, hnames, "Hand");
 }
 } // namespace
 
