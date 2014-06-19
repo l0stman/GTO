@@ -1,17 +1,64 @@
 #ifndef GTO_RANGE_H_
 #define GTO_RANGE_H_
 
+#include <functional>
 #include <string>
 #include <unordered_set>
 #include <vector>
 
+#include <pokerstove/peval/Card.h>
+
 #include "range_interface.h"
 
 namespace GTO {
-using std::string;
 
-class Range : public RangeInterface {
+// Represent hole cards.
+class Hand : public CardSet {
 public:
+        Hand() : CardSet() {}
+
+        explicit Hand(const std::string& s)
+                : CardSet(s)
+        {
+                if (size() != 2)
+                        err::quit("Hand should contain two cards: %s.",
+                                  s.c_str());
+        }
+
+        bool operator<(const Hand& rhs) const
+        {
+                std::vector<pokerstove::Card> c1 = cards();
+                std::vector<pokerstove::Card> c2 = rhs.cards();
+                int t1 = (c1[0] < c1[1]) ? 1 : 0;
+                int t2 = (c2[0] < c2[1]) ? 1 : 0;
+
+                return c1[t1] < c2[t2] ||
+                                (c1[t1] == c2[t2] && c1[1-t1]<c2[1-t2]);
+        }
+
+        std::string ToString() const { return str(); }
+};
+} // namespace GTO
+
+namespace std {
+template<>
+struct hash<GTO::Hand> {
+        size_t
+        operator()(const GTO::Hand& h) const
+        {
+                return hash<uint64_t>()(h.mask());
+        }
+};
+} // namespace std
+
+namespace GTO {
+using std::string;
+using std::vector;
+
+class Range : public RangeInterface<Hand> {
+public:
+        typedef std::unordered_set<Hand>::const_iterator const_iterator;
+
         Range() {};
         explicit Range(const string& s);
 
@@ -29,7 +76,6 @@ public:
         virtual string ToString() const;
         virtual size_t Size() const { return range_.size(); }
 
-        typedef std::unordered_set<Hand>::const_iterator const_iterator;
         const_iterator begin() const { return range_.begin();};
         const_iterator end() const { return range_.end();};
 private:
@@ -45,6 +91,6 @@ private:
         void AddSingleSuitPlus(const string& s, const size_t& pos);
         std::unordered_set<Hand> range_;
 };
-}
+} // namespace GTO
 
 #endif // !GTO_RANGE_H_
