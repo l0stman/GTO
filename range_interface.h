@@ -1,6 +1,7 @@
 #ifndef GTO_RANGE_INTERFACE_H_
 #define GTO_RANGE_INTERFACE_H_
 
+#include <functional>
 #include <string>
 
 #include <pokerstove/peval/Card.h>
