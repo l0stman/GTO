@@ -1,7 +1,9 @@
 #ifndef GTO_EQUI_DIST_INTERFACE_H_
 #define GTO_EQUI_DIST_INTERFACE_H_
 
+#include <utility>
 #include <vector>
+
 #include "array.h"
 
 namespace GTO {
@@ -20,6 +22,31 @@ public:
         virtual Array LUT(const std::vector<Hand>& hand1,
                           const std::vector<Hand>& hand2) const = 0;
 };
+
+template<class Hand>
+using Pair = std::pair<Hand, Hand>;
 } // namespace GTO
+
+namespace std {
+
+template<class Hand>
+struct hash<GTO::Pair<Hand>> {
+        // Use the function hash_combine from boost.
+        void
+        hash_combine(const Hand& c, size_t& seed) const
+        {
+                seed ^= hash<Hand>()(c) + 0x9e3779b9 + (seed << 6) +
+                        (seed >> 2);
+        }
+
+        size_t operator()(const GTO::Pair<Hand>& p) const
+        {
+                size_t seed = 0;
+                hash_combine(p.first, seed);
+                hash_combine(p.second, seed);
+                return seed;
+        }
+};
+} // namespace std
 
 #endif  // !GTO_EQUI_DIST_INTERFACE_H_

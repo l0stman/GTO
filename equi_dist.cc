@@ -45,7 +45,7 @@ EquiDist::InitRiver(const Range& hero,
 {
         boost::shared_ptr<PokerHandEvaluator> E(PokerHandEvaluator::alloc("h"));
         PokerEvaluation he, ve;
-        PairHands p;
+        Pair<Hand> p;
 
         for (auto hit = hero.begin(); hit != hero.end(); ++hit) {
                 if (hit->intersects(board))
@@ -122,7 +122,7 @@ EquiDist::InitPreflop(const Range& hero, const Range& villain)
         char v[4];
         double EQh = 0;
         double EQv = 0;
-        std::unordered_map<PairHands, double> equity;
+        std::unordered_map<Pair<Hand>, double> equity;
 
         if ((fp = fopen(preflop_file_, "r")) == NULL)
                 err::sys("Can't open %s", preflop_file_);
@@ -133,8 +133,8 @@ EquiDist::InitPreflop(const Range& hero, const Range& villain)
                 Hand vc = *vr.begin();
                 hc.canonize();
                 vc.canonize();
-                equity[PairHands(hc, vc)] = EQh;
-                equity[PairHands(vc, hc)] = EQv;
+                equity[Pair<Hand>(hc, vc)] = EQh;
+                equity[Pair<Hand>(vc, hc)] = EQv;
         }
         fclose(fp);
 
@@ -150,7 +150,7 @@ EquiDist::InitPreflop(const Range& hero, const Range& villain)
                                 else
                                         set_equity(*hit,
                                                    *vit,
-                                                   equity[PairHands(hc, vc)]);
+                                                   equity[Pair<Hand>(hc, vc)]);
 
                         }
 }

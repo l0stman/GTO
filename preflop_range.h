@@ -36,7 +36,8 @@ private:
 
 namespace std {
 
-template<> struct hash<GTO::PreflopHand> {
+template<>
+struct hash<GTO::PreflopHand> {
         size_t
         operator()(const GTO::PreflopHand& h) const
         {
