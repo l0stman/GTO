@@ -8,6 +8,7 @@
 
 #include <pokerstove/peval/Card.h>
 
+#include "err.h"
 #include "range_interface.h"
 
 namespace GTO {

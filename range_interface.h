@@ -2,10 +2,7 @@
 #define GTO_RANGE_INTERFACE_H_
 
 #include <string>
-
 #include <pokerstove/peval/CardSet.h>
-
-#include "err.h"
 
 namespace GTO {
 using pokerstove::CardSet;
