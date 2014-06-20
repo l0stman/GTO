@@ -16,7 +16,8 @@
            #:iterate
            #:new
            #:fill
-           #:size))
+           #:size
+           #:handp))
 
 (defpackage #:equity
   (:use :cl)

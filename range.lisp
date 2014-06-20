@@ -5,19 +5,35 @@
 (defun rankp (c)
   (integerp (position c +ranks+)))
 
+(defun handp (o)
+  "Return true if O is a preflop representation of a hand."
+  (and (stringp o)
+       (or (and (= (length o) 2) (char= (char o 0) (char o 1)))
+           (and (= (length o) 3)
+                (or (char= (char o 2) #\s) (char= (char o 2) #\o))))
+       (rankp (char o 0))
+       (rankp (char o 1))))
+
+(deftype hand () '(satisfies handp))
+
 (defstruct range
   (hands (make-hash-table :test 'equal) :type hash-table))
 
 (defun memberp (range hand)
   "Return true if HAND is a member of RANGE."
+  (check-type range range)
   (gethash hand (range-hands range)))
 
 (defun add (range hand)
   "Add HAND to RANGE."
+  (check-type range range)
+  (check-type hand hand)
   (setf (gethash hand (range-hands range)) T))
 
 (defun remove (range hand)
   "Remove HAND from RANGE."
+  (check-type range range)
+  (check-type hand hand)
   (remhash hand (range-hands range)))
 
 (defun fill (range)
