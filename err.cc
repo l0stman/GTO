@@ -18,7 +18,7 @@ quit(const char *fmt, ...)
         fprintf(stderr, "%s: ", progname);
         vfprintf(stderr, fmt, ap);
         va_end(ap);
-        putchar('\n');
+        putc('\n', stderr);
         exit(EXIT_FAILURE);
 }
 
@@ -47,6 +47,6 @@ warn(const char *fmt, ...)
         fprintf(stderr, "%s: ", progname);
         vfprintf(stderr, fmt, ap);
         va_end(ap);
-        putchar('\n');
+        putc('\n', stderr);
 }
 }
