@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "array.h"
+#include "equi_dist_interface.h"
 #include "range.h"
 
 namespace GTO {
@@ -34,25 +35,21 @@ struct hash<GTO::PairHands> {
 } // namespace std
 
 namespace GTO {
-class EquiDist {
+class EquiDist : public EquiDistInterface<Hand> {
 public:
         explicit EquiDist(const Range& hero,
                           const Range& villain,
                           const CardSet& board=CardSet());
 
-        // Return the equity of hero's hand against villain's or -1 if
-        // it doesn't exist.
-        double
+        virtual double
         Equity(const Hand& hero, const Hand& villain) const
         {
                 PairHands p(hero, villain);
                 return equity_.count(p) > 0 ? equity_.at(p) : -1;
         }
 
-        // Return a lookup table represented as an array such that
-        // Array.get(i, j) == Equity(hands1[i], hands2[j]).
-        Array LUT(const std::vector<Hand>& hands1,
-                  const std::vector<Hand>& hands2) const;
+        virtual Array LUT(const std::vector<Hand>& hands1,
+                          const std::vector<Hand>& hands2) const;
 private:
         void InitRiver(const Range& hero,
                        const Range& villain,
