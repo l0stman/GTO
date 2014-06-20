@@ -79,16 +79,6 @@ public:
         const_iterator begin() const { return range_.begin();};
         const_iterator end() const { return range_.end();};
 private:
-        void AddSuited(const string& s, const size_t& pos);
-        void AddOffsuit(const string& s, const size_t& pos);
-        void AddSuitedPlus(const string& s, const size_t& pos);
-        void AddOffsuitPlus(const string& s, const size_t& pos);
-        void AddSuitedRange(const string& s, const size_t& pos);
-        void AddOffsuitRange(const string& s, const size_t& pos);
-        void AddPairsRange(const string& s, const size_t& pos);
-        void AddPairsPlus(const string& s, const size_t& pos);
-        void AddSingleSuitRange(const string& s, const size_t& pos);
-        void AddSingleSuitPlus(const string& s, const size_t& pos);
         std::unordered_set<Hand> range_;
 };
 } // namespace GTO

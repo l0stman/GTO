@@ -49,11 +49,11 @@ IsRank(const char& c)
 {
         return GetRank(c) != string::npos;
 }
-}
 
-namespace GTO {
+typedef std::unordered_set<GTO::Hand> Table;
+
 void
-Range::AddSuited(const string& s, const size_t& pos)
+AddSuited(const string& s, const size_t& pos, Table& range)
 {
         string h(4, 'x');
         h[0] = s[pos];
@@ -64,12 +64,12 @@ Range::AddSuited(const string& s, const size_t& pos)
         for (size_t i = 0; i < kSuits.length(); i++) {
                 h[1] = kSuits[i];
                 h[3] = kSuits[i];
-                range_.insert(Hand(h));
+                range.insert(GTO::Hand(h));
         }
 }
 
 void
-Range::AddOffsuit(const string& s, const size_t& pos)
+AddOffsuit(const string& s, const size_t& pos, Table& range)
 {
         string h(4, 'x');
         h[0] = s[pos];
@@ -80,12 +80,12 @@ Range::AddOffsuit(const string& s, const size_t& pos)
                         if (i != j) {
                                 h[1] = kSuits[i];
                                 h[3] = kSuits[j];
-                                range_.insert(Hand(h));
+                                range.insert(GTO::Hand(h));
                         }
 }
 
 void
-Range::AddSuitedPlus(const string& s, const size_t& pos)
+AddSuitedPlus(const string& s, const size_t& pos, Table& range)
 {
         string h(4, 'x');
         size_t min = 0;
@@ -98,13 +98,13 @@ Range::AddSuitedPlus(const string& s, const size_t& pos)
                 for (size_t j = 0; j < kSuits.length(); ++j) {
                         h[1] = kSuits[j];
                         h[3] = kSuits[j];
-                        range_.insert(Hand(h));
+                        range.insert(GTO::Hand(h));
                 }
         }
 }
 
 void
-Range::AddOffsuitPlus(const string& s, const size_t& pos)
+AddOffsuitPlus(const string& s, const size_t& pos, Table& range)
 {
         string h(4, 'x');
         size_t min = 0;
@@ -119,13 +119,13 @@ Range::AddOffsuitPlus(const string& s, const size_t& pos)
                                 if (j != k) {
                                         h[1] = kSuits[j];
                                         h[3] = kSuits[k];
-                                        range_.insert(Hand(h));
+                                        range.insert(GTO::Hand(h));
                                 }
         }
 }
 
 void
-Range::AddSuitedRange(const string& s, const size_t& pos)
+AddSuitedRange(const string& s, const size_t& pos, Table& range)
 {
         string h(4, 'x');
         size_t min1, min2, max1, max2;
@@ -141,13 +141,13 @@ Range::AddSuitedRange(const string& s, const size_t& pos)
                 for (size_t j = 0; j < kSuits.length(); ++j) {
                         h[1] = kSuits[j];
                         h[3] = kSuits[j];
-                        range_.insert(Hand(h));
+                        range.insert(GTO::Hand(h));
                 }
         }
 }
 
 void
-Range::AddOffsuitRange(const string& s, const size_t& pos)
+AddOffsuitRange(const string& s, const size_t& pos, Table& range)
 {
         string h(4, 'x');
         size_t min1, min2, max1, max2;
@@ -165,13 +165,13 @@ Range::AddOffsuitRange(const string& s, const size_t& pos)
                                 if (j != k) {
                                         h[1] = kSuits[j];
                                         h[3] = kSuits[k];
-                                        range_.insert(Hand(h));
+                                        range.insert(GTO::Hand(h));
                                 }
         }
 }
 
 void
-Range::AddPairsRange(const string& s, const size_t& pos)
+AddPairsRange(const string& s, const size_t& pos, Table& range)
 {
         string h(2, 'x');
         std::pair<size_t,size_t> p = std::minmax(
@@ -180,12 +180,12 @@ Range::AddPairsRange(const string& s, const size_t& pos)
         for (size_t i = p.first; i <= p.second; i++) {
                 h[0] = kRanks[i];
                 h[1] = kRanks[i];
-                AddOffsuit(h, 0);
+                AddOffsuit(h, 0, range);
         }
 }
 
 void
-Range::AddPairsPlus(const string& s, const size_t& pos)
+AddPairsPlus(const string& s, const size_t& pos, Table& range)
 {
         string h(2, 'x');
         size_t r = GetRank('A');
@@ -193,12 +193,12 @@ Range::AddPairsPlus(const string& s, const size_t& pos)
         for (size_t i = GetRank(s[pos]); i<=r; ++i) {
                 h[0] = kRanks[i];
                 h[1] = kRanks[i];
-                AddOffsuit(h, 0);
+                AddOffsuit(h, 0, range);
         }
 }
 
 void
-Range::AddSingleSuitRange(const string& s, const size_t& pos)
+AddSingleSuitRange(const string& s, const size_t& pos, Table& range)
 {
         string h(4, 'x');
         size_t r1 = GetRank(s[pos]);
@@ -216,12 +216,12 @@ Range::AddSingleSuitRange(const string& s, const size_t& pos)
         h[3] = s[1];
         for (size_t i = p.first; i<=p.second; ++i) {
                 h[2] = kRanks[i];
-                range_.insert(Hand(h));
+                range.insert(GTO::Hand(h));
         }
 }
 
 void
-Range::AddSingleSuitPlus(const string& s, const size_t& pos)
+AddSingleSuitPlus(const string& s, const size_t& pos, Table& range)
 {
         string h(4, 'x');
         std::pair<size_t,size_t> p = std::minmax(
@@ -232,9 +232,12 @@ Range::AddSingleSuitPlus(const string& s, const size_t& pos)
         h[3] = s[pos+1];
         for (size_t i = p.first; i < p.second; ++i) {
                 h[2] = kRanks[i];
-                range_.insert(Hand(h));
+                range.insert(GTO::Hand(h));
         }
 }
+} // namespace
+
+namespace GTO {
 
 Range::Range(const string& in)
 {
@@ -254,22 +257,22 @@ Range::Range(const string& in)
                                 if (!IsRank(s[first]) || !IsRank(s[first+1]))
                                         FmtError(s.substr(first, len));
                                 if (s[first] != s[first+1])
-                                        AddSuited(s, first);
-                                AddOffsuit(s, first);
+                                        AddSuited(s, first, range_);
+                                AddOffsuit(s, first, range_);
                                 break;
                         case 3:
                                 if (!IsRank(s[first]) || !IsRank(s[first+1]))
                                         FmtError(s.substr(first, len));
                                 switch (s[first+2]) {
                                 case 's':
-                                        AddSuited(s, first);
+                                        AddSuited(s, first, range_);
                                         break;
                                 case 'o':
-                                        AddOffsuit(s, first);
+                                        AddOffsuit(s, first, range_);
                                         break;
                                 case '+':
                                         if (s[first] == s[first+1])
-                                                AddPairsPlus(s, first);
+                                                AddPairsPlus(s, first, range_);
                                         else
                                                 FmtError(s.substr(first, len));
                                         break;
@@ -282,11 +285,11 @@ Range::Range(const string& in)
                                         FmtError(s.substr(first, len));
                                 if (s[first+2] == 's' && s[first+3] == '+' &&
                                     IsRank(s[first+1]))
-                                        AddSuitedPlus(s, first);
+                                        AddSuitedPlus(s, first, range_);
                                 else if (s[first+2] == 'o' &&
                                          s[first+3] =='+' &&
                                          IsRank(s[first+1]))
-                                        AddOffsuitPlus(s, first);
+                                        AddOffsuitPlus(s, first, range_);
                                 else if (IsRank(s[first+2]) &&
                                          IsSuit(s[first+1]) &&
                                          IsSuit(s[first+3]))
@@ -301,13 +304,13 @@ Range::Range(const string& in)
                                     s[first+2] == '-' &&
                                     IsRank(s[first+3]) &&
                                     s[first+3] == s[first+4])
-                                        AddPairsRange(s, first);
+                                        AddPairsRange(s, first, range_);
                                 else if (IsRank(s[first]) &&
                                          IsRank(s[first+2]) &&
                                          IsSuit(s[first+1]) &&
                                          s[first+1] == s[first+3] &&
                                          s[first+4] == '+')
-                                        AddSingleSuitPlus(s, first);
+                                        AddSingleSuitPlus(s, first, range_);
                                 else
                                         FmtError(s.substr(first, len));
                                 break;
@@ -317,11 +320,11 @@ Range::Range(const string& in)
                                         FmtError(s.substr(first, len));
                                 if (s[first+2] == 's' && s[first+3] == '-' &&
                                     s[first+6] == 's')
-                                        AddSuitedRange(s, first);
+                                        AddSuitedRange(s, first, range_);
                                 else if (s[first+2] == 'o' &&
                                          s[first+3] == '-' &&
                                          s[first+6] == 'o')
-                                        AddOffsuitRange(s, first);
+                                        AddOffsuitRange(s, first, range_);
                                 else
                                         FmtError(s.substr(first, len));
                                 break;
@@ -332,7 +335,7 @@ Range::Range(const string& in)
                                     IsSuit(c) && s[first+3] == c &&
                                     s[first+6] == c && s[first+8] == c &&
                                     s[first+4] == '-')
-                                        AddSingleSuitRange(s, first);
+                                        AddSingleSuitRange(s, first, range_);
                                 else
                                         FmtError(s.substr(first, len));
                                 break;
