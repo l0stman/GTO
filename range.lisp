@@ -72,8 +72,10 @@ AKo,AKs,AK,33+,22-77,A2o-A5o,A2s-A5s,A2s+,A2o+."
             (unless (handp start) (err))
             (case (- end start)
               (2
-               (add range (format nil "~As" fmt))
-               (add range (format nil "~Ao" fmt)))
+               (cond ((char= (char fmt 0) (char fmt 1)) (add range fmt))
+                     (t
+                      (add range (format nil "~As" fmt))
+                      (add range (format nil "~Ao" fmt)))))
               (3
                (case (char fmts (+ start 2))
                  ((#\s #\o) (add range fmt))
