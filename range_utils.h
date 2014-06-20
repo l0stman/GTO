@@ -1,6 +1,8 @@
 #ifndef GTO_RANGE_UTILS_H_
 #define GTO_RANGE_UTILS_H_
 
+#include <algorithm>
+
 #include "err.h"
 
 namespace GTO {
