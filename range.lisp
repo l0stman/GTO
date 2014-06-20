@@ -10,7 +10,8 @@
   (and (stringp o)
        (or (and (= (length o) 2) (char= (char o 0) (char o 1)))
            (and (= (length o) 3)
-                (or (char= (char o 2) #\s) (char= (char o 2) #\o))))
+                (or (char= (char o 2) #\s) (char= (char o 2) #\o))
+                (char/= (char o 0) (char o 1))))
        (rankp (char o 0))
        (rankp (char o 1))))
 
