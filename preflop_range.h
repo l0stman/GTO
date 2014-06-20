@@ -1,5 +1,5 @@
-#ifndef GTO_PREFLOP_RANGE_
-#define GTO_PREFLOP_RANGE_
+#ifndef GTO_PREFLOP_RANGE_H_
+#define GTO_PREFLOP_RANGE_H_
 
 #include <functional>
 #include <unordered_set>
@@ -81,4 +81,4 @@ private:
 
 }
 
-#endif  // !GTO_PREFLOP_RANGE_
+#endif  // !GTO_PREFLOP_RANGE_H_
