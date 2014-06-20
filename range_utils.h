@@ -46,6 +46,12 @@ IsRank(const char& c)
         return GetRank(c) != string::npos;
 }
 
+inline bool
+IsHand(const string& s, const size_t& pos)
+{
+        return IsRank(s[pos]) && IsRank(s[pos+1]);
+}
+
 } // namespace GTO
 
 #endif  // !GTO_RANGE_UTILS_H_

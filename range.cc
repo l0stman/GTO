@@ -215,14 +215,14 @@ Range::Range(const string& in)
                         size_t len = last-first;
                         switch (len) {
                         case 2:
-                                if (!IsRank(s[first]) || !IsRank(s[first+1]))
+                                if (!IsHand(s, first))
                                         FmtError(s.substr(first, len));
                                 if (s[first] != s[first+1])
                                         AddSuited(s, first, range_);
                                 AddOffsuit(s, first, range_);
                                 break;
                         case 3:
-                                if (!IsRank(s[first]) || !IsRank(s[first+1]))
+                                if (!IsHand(s, first))
                                         FmtError(s.substr(first, len));
                                 switch (s[first+2]) {
                                 case 's':
@@ -276,8 +276,7 @@ Range::Range(const string& in)
                                         FmtError(s.substr(first, len));
                                 break;
                         case 7:
-                                if (!IsRank(s[first]) || !IsRank(s[first+1]) ||
-                                    !IsRank(s[first+4]) || !IsRank(s[first+5]))
+                                if (!IsHand(s, first) || !IsHand(s, first+4))
                                         FmtError(s.substr(first, len));
                                 if (s[first+2] == 's' && s[first+3] == '-' &&
                                     s[first+6] == 's')
