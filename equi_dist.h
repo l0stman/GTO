@@ -26,21 +26,6 @@ public:
         virtual Array LUT(const std::vector<Hand>& hands1,
                           const std::vector<Hand>& hands2) const;
 private:
-        void InitRiver(const Range& hero,
-                       const Range& villain,
-                       const CardSet& board);
-        void InitFlopOrTurn(const Range& hero,
-                            const Range& villain,
-                            const CardSet& board);
-        void InitPreflop(const Range& hero, const Range& villain);
-        void set_equity(const Hand& hero,
-                        const Hand& villain,
-                        const double& val)
-        {
-                equity_[Pair<Hand>(hero, villain)] = val;
-        }
-
-        const char *preflop_file_ = "preflop-matchups.txt";
         std::unordered_map<Pair<Hand>, double> equity_;
 };
 }

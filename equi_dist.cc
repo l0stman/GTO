@@ -10,42 +10,34 @@
 
 #include "err.h"
 
-namespace GTO {
+namespace {
+
 using std::vector;
 using pokerstove::PokerHandEvaluator;
 using pokerstove::PokerEvaluation;
 using pokerstove::Card;
+using pokerstove::CardSet;
 using pokerstove::combinations;
 
-EquiDist::EquiDist(const Range& hero,
-                   const Range& villain,
-                   const CardSet& board)
+typedef std::unordered_map<GTO::Pair<GTO::Hand>, double> Table;
+
+inline void
+set(const GTO::Hand& hero,
+    const GTO::Hand& villain,
+    const double& val,
+    Table& equity)
 {
-        switch (board.size()) {
-        case 0:
-                InitPreflop(hero, villain);
-                break;
-        case 3:
-        case 4:
-                InitFlopOrTurn(hero, villain, board);
-                break;
-        case 5:
-                InitRiver(hero, villain, board);
-                break;
-        default:
-                err::quit("Unsupported initial board size: %s.",
-                          board.str().c_str());
-        }
+        equity[GTO::Pair<GTO::Hand>(hero, villain)] = val;
 }
 
 void
-EquiDist::InitRiver(const Range& hero,
-                    const Range& villain,
-                    const CardSet& board)
+InitRiver(const GTO::Range& hero,
+          const GTO::Range& villain,
+          const CardSet& board,
+          Table& equity)
 {
         boost::shared_ptr<PokerHandEvaluator> E(PokerHandEvaluator::alloc("h"));
         PokerEvaluation he, ve;
-        Pair<Hand> p;
 
         for (auto hit = hero.begin(); hit != hero.end(); ++hit) {
                 if (hit->intersects(board))
@@ -55,22 +47,21 @@ EquiDist::InitRiver(const Range& hero,
                                 continue;
                         he = E->evaluateHand(*hit, board).high();
                         ve = E->evaluateHand(*vit, board).high();
-                        p.first = *hit;
-                        p.second = *vit;
                         if (he == ve)
-                                equity_[p] = 0.5;
+                                set(*hit, *vit, 0.5, equity);
                         else if (he > ve)
-                                equity_[p] = 1;
+                                set(*hit, *vit, 1, equity);
                         else
-                                equity_[p] = 0;
+                                set(*hit, *vit, 0, equity);
                 }
         }
 }
 
 void
-EquiDist::InitFlopOrTurn(const Range& hero,
-                         const Range& villain,
-                         const CardSet& init_board)
+InitFlopOrTurn(const GTO::Range& hero,
+               const GTO::Range& villain,
+               const CardSet& init_board,
+               Table& equity)
 {
         boost::shared_ptr<PokerHandEvaluator> E(PokerHandEvaluator::alloc("h"));
         PokerEvaluation he, ve;
@@ -83,7 +74,7 @@ EquiDist::InitFlopOrTurn(const Range& hero,
                         if (vit->intersects(init_board) ||
                             vit->intersects(*hit))
                                 continue;
-                        if (Equity(*hit, *vit) >= 0)
+                        if (equity.count(GTO::Pair<GTO::Hand>(*hit, *vit)) > 0)
                                 continue;
                         CardSet dead(init_board);
                         dead |= *hit;
@@ -107,52 +98,35 @@ EquiDist::InitFlopOrTurn(const Range& hero,
                                 ++total;
                         } while (boards.next());
                         if (N > 0) {
-                                set_equity(*hit, *vit, shares/total);
-                                set_equity(*vit, *hit, 1-shares/total);
+                                set(*hit, *vit, shares/total, equity);
+                                set(*vit, *hit, 1-shares/total, equity);
                         }
                 }
         }
 }
+} // namespace
 
-void
-EquiDist::InitPreflop(const Range& hero, const Range& villain)
+namespace GTO {
+
+EquiDist::EquiDist(const Range& hero,
+                   const Range& villain,
+                   const CardSet& board)
 {
-        FILE *fp;
-        char h[4];
-        char v[4];
-        double EQh = 0;
-        double EQv = 0;
-        std::unordered_map<Pair<Hand>, double> equity;
-
-        if ((fp = fopen(preflop_file_, "r")) == NULL)
-                err::sys("Can't open %s", preflop_file_);
-        while (fscanf(fp, "%s vs. %s : %lf vs. %lf", h, v, &EQh, &EQv)!=EOF) {
-                Range hr(h);
-                Range vr(v);
-                Hand hc = *hr.begin();
-                Hand vc = *vr.begin();
-                hc.canonize();
-                vc.canonize();
-                equity[Pair<Hand>(hc, vc)] = EQh;
-                equity[Pair<Hand>(vc, hc)] = EQv;
+        switch (board.size()) {
+        case 0:
+                err::quit("Not supported. Use PreflopEquiDist instead.");
+                break;
+        case 3:
+        case 4:
+                InitFlopOrTurn(hero, villain, board, equity_);
+                break;
+        case 5:
+                InitRiver(hero, villain, board, equity_);
+                break;
+        default:
+                err::quit("Unsupported initial board size: %s.",
+                          board.str().c_str());
         }
-        fclose(fp);
-
-        for (auto hit = hero.begin(); hit != hero.end(); ++hit)
-                for (auto vit = villain.begin(); vit != villain.end(); ++vit)
-                        if (hit->disjoint(*vit)) {
-                                Hand hc = *hit;
-                                Hand vc = *vit;
-                                hit->canonize();
-                                vit->canonize();
-                                if (hc == vc)
-                                        set_equity(*hit, *vit, 0.5);
-                                else
-                                        set_equity(*hit,
-                                                   *vit,
-                                                   equity[Pair<Hand>(hc, vc)]);
-
-                        }
 }
 
 Array
