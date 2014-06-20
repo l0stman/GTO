@@ -6,50 +6,11 @@
 #include <cstdlib>
 #include <set>
 
-#include "err.h"
+#include "range_utils.h"
 
 namespace {
+
 using std::string;
-
-const string kRanks = "23456789TJQKA";
-const string kSuits = "cdhs";
-
-void
-FmtError(const string& s)
-{
-        err::quit("Unknown range format: %s.", s.c_str());
-}
-
-inline size_t
-GetRank(const char& c)
-{
-        return kRanks.find(c);
-}
-
-inline void
-ParseRanks(const string& s,
-           const size_t& pos,
-           size_t& min,
-           size_t& max)
-{
-        std::pair<size_t,size_t> p = std::minmax(
-                GetRank(s[pos]), GetRank(s[pos+1]));
-        min = p.first;
-        max = p.second;
-}
-
-inline bool
-IsSuit(const char& c)
-{
-        return c == 'c' || c == 'd' || c == 'h' || c == 's';
-}
-
-inline bool
-IsRank(const char& c)
-{
-        return GetRank(c) != string::npos;
-}
-
 typedef std::unordered_set<GTO::Hand> Table;
 
 void
@@ -60,10 +21,10 @@ AddSuited(const string& s, const size_t& pos, Table& range)
         h[2] = s[pos+1];
 
         if (s[pos] == s[pos+1])
-                FmtError(s.substr(pos, 3));
-        for (size_t i = 0; i < kSuits.length(); i++) {
-                h[1] = kSuits[i];
-                h[3] = kSuits[i];
+                GTO::FmtError(s.substr(pos, 3));
+        for (size_t i = 0; i < GTO::kSuits.length(); i++) {
+                h[1] = GTO::kSuits[i];
+                h[3] = GTO::kSuits[i];
                 range.insert(GTO::Hand(h));
         }
 }
@@ -75,11 +36,11 @@ AddOffsuit(const string& s, const size_t& pos, Table& range)
         h[0] = s[pos];
         h[2] = s[pos+1];
 
-        for (size_t i = 0; i < kSuits.length(); i++)
-                for (size_t j = 0; j < kSuits.length(); j++)
+        for (size_t i = 0; i < GTO::kSuits.length(); i++)
+                for (size_t j = 0; j < GTO::kSuits.length(); j++)
                         if (i != j) {
-                                h[1] = kSuits[i];
-                                h[3] = kSuits[j];
+                                h[1] = GTO::kSuits[i];
+                                h[3] = GTO::kSuits[j];
                                 range.insert(GTO::Hand(h));
                         }
 }
@@ -91,13 +52,13 @@ AddSuitedPlus(const string& s, const size_t& pos, Table& range)
         size_t min = 0;
         size_t max = 0;
 
-        ParseRanks(s, pos, min, max);
-        h[0] = kRanks[max];
+        GTO::ParseRanks(s, pos, min, max);
+        h[0] = GTO::kRanks[max];
         for (size_t i = min; i < max; ++i) {
-                h[2] = kRanks[i];
-                for (size_t j = 0; j < kSuits.length(); ++j) {
-                        h[1] = kSuits[j];
-                        h[3] = kSuits[j];
+                h[2] = GTO::kRanks[i];
+                for (size_t j = 0; j < GTO::kSuits.length(); ++j) {
+                        h[1] = GTO::kSuits[j];
+                        h[3] = GTO::kSuits[j];
                         range.insert(GTO::Hand(h));
                 }
         }
@@ -110,15 +71,15 @@ AddOffsuitPlus(const string& s, const size_t& pos, Table& range)
         size_t min = 0;
         size_t max = 0;
 
-        ParseRanks(s, pos, min, max);
-        h[0] = kRanks[max];
+        GTO::ParseRanks(s, pos, min, max);
+        h[0] = GTO::kRanks[max];
         for (size_t i = min; i < max; ++i) {
-                h[2] = kRanks[i];
-                for (size_t j = 0; j < kSuits.length(); ++j)
-                        for (size_t k = 0; k < kSuits.length(); ++k)
+                h[2] = GTO::kRanks[i];
+                for (size_t j = 0; j < GTO::kSuits.length(); ++j)
+                        for (size_t k = 0; k < GTO::kSuits.length(); ++k)
                                 if (j != k) {
-                                        h[1] = kSuits[j];
-                                        h[3] = kSuits[k];
+                                        h[1] = GTO::kSuits[j];
+                                        h[3] = GTO::kSuits[k];
                                         range.insert(GTO::Hand(h));
                                 }
         }
@@ -130,17 +91,17 @@ AddSuitedRange(const string& s, const size_t& pos, Table& range)
         string h(4, 'x');
         size_t min1, min2, max1, max2;
 
-        ParseRanks(s, pos, min1, max1);
-        ParseRanks(s, pos+4, min2, max2);
+        GTO::ParseRanks(s, pos, min1, max1);
+        GTO::ParseRanks(s, pos+4, min2, max2);
         if (max1 != max2)
-                FmtError(s.substr(pos, 7));
-        h[0] = kRanks[max1];
+                GTO::FmtError(s.substr(pos, 7));
+        h[0] = GTO::kRanks[max1];
         std::pair<size_t,size_t> p = std::minmax(min1, min2);
         for (size_t i = p.first; i<=p.second; ++i) {
-                h[2] = kRanks[i];
-                for (size_t j = 0; j < kSuits.length(); ++j) {
-                        h[1] = kSuits[j];
-                        h[3] = kSuits[j];
+                h[2] = GTO::kRanks[i];
+                for (size_t j = 0; j < GTO::kSuits.length(); ++j) {
+                        h[1] = GTO::kSuits[j];
+                        h[3] = GTO::kSuits[j];
                         range.insert(GTO::Hand(h));
                 }
         }
@@ -152,19 +113,19 @@ AddOffsuitRange(const string& s, const size_t& pos, Table& range)
         string h(4, 'x');
         size_t min1, min2, max1, max2;
 
-        ParseRanks(s, pos, min1, max1);
-        ParseRanks(s, pos+4, min2, max2);
+        GTO::ParseRanks(s, pos, min1, max1);
+        GTO::ParseRanks(s, pos+4, min2, max2);
         if (max1 != max2)
-                FmtError(s.substr(pos, 7));
-        h[0] = kRanks[max1];
+                GTO::FmtError(s.substr(pos, 7));
+        h[0] = GTO::kRanks[max1];
         std::pair<size_t,size_t> p = std::minmax(min1, min2);
         for (size_t i = p.first; i<=p.second; ++i) {
-                h[2] = kRanks[i];
-                for (size_t j = 0; j < kSuits.length(); ++j)
-                        for (size_t k = 0; k < kSuits.length(); ++k)
+                h[2] = GTO::kRanks[i];
+                for (size_t j = 0; j < GTO::kSuits.length(); ++j)
+                        for (size_t k = 0; k < GTO::kSuits.length(); ++k)
                                 if (j != k) {
-                                        h[1] = kSuits[j];
-                                        h[3] = kSuits[k];
+                                        h[1] = GTO::kSuits[j];
+                                        h[3] = GTO::kSuits[k];
                                         range.insert(GTO::Hand(h));
                                 }
         }
@@ -175,11 +136,11 @@ AddPairsRange(const string& s, const size_t& pos, Table& range)
 {
         string h(2, 'x');
         std::pair<size_t,size_t> p = std::minmax(
-                GetRank(s[pos]), GetRank(s[pos+3]));
+                GTO::GetRank(s[pos]), GTO::GetRank(s[pos+3]));
 
         for (size_t i = p.first; i <= p.second; i++) {
-                h[0] = kRanks[i];
-                h[1] = kRanks[i];
+                h[0] = GTO::kRanks[i];
+                h[1] = GTO::kRanks[i];
                 AddOffsuit(h, 0, range);
         }
 }
@@ -188,11 +149,11 @@ void
 AddPairsPlus(const string& s, const size_t& pos, Table& range)
 {
         string h(2, 'x');
-        size_t r = GetRank('A');
+        size_t r = GTO::GetRank('A');
 
-        for (size_t i = GetRank(s[pos]); i<=r; ++i) {
-                h[0] = kRanks[i];
-                h[1] = kRanks[i];
+        for (size_t i = GTO::GetRank(s[pos]); i<=r; ++i) {
+                h[0] = GTO::kRanks[i];
+                h[1] = GTO::kRanks[i];
                 AddOffsuit(h, 0, range);
         }
 }
@@ -201,21 +162,21 @@ void
 AddSingleSuitRange(const string& s, const size_t& pos, Table& range)
 {
         string h(4, 'x');
-        size_t r1 = GetRank(s[pos]);
-        size_t r2 = GetRank(s[pos+2]);
-        size_t r3 = GetRank(s[pos+5]);
-        size_t r4 = GetRank(s[pos+7]);
+        size_t r1 = GTO::GetRank(s[pos]);
+        size_t r2 = GTO::GetRank(s[pos+2]);
+        size_t r3 = GTO::GetRank(s[pos+5]);
+        size_t r4 = GTO::GetRank(s[pos+7]);
         size_t max = std::max(r1, r2);
         std::pair<size_t,size_t> p = std::minmax(
                 std::min(r1, r2), std::min(r3, r4));
 
         if (max != std::max(r3, r4))
-                FmtError(s.substr(pos, 9));
-        h[0] = kRanks[max];
+                GTO::FmtError(s.substr(pos, 9));
+        h[0] = GTO::kRanks[max];
         h[1] = s[1];
         h[3] = s[1];
         for (size_t i = p.first; i<=p.second; ++i) {
-                h[2] = kRanks[i];
+                h[2] = GTO::kRanks[i];
                 range.insert(GTO::Hand(h));
         }
 }
@@ -225,13 +186,13 @@ AddSingleSuitPlus(const string& s, const size_t& pos, Table& range)
 {
         string h(4, 'x');
         std::pair<size_t,size_t> p = std::minmax(
-                GetRank(s[pos]), GetRank(s[pos+2]));
+                GTO::GetRank(s[pos]), GTO::GetRank(s[pos+2]));
 
-        h[0] = kRanks[p.second];
+        h[0] = GTO::kRanks[p.second];
         h[1] = s[pos+1];
         h[3] = s[pos+1];
         for (size_t i = p.first; i < p.second; ++i) {
-                h[2] = kRanks[i];
+                h[2] = GTO::kRanks[i];
                 range.insert(GTO::Hand(h));
         }
 }
