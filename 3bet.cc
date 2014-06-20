@@ -267,13 +267,13 @@ Simulate(const double& stack,
         std::mt19937 generator(rd());
         std::uniform_int_distribution<size_t> hdist(0, hsize-1);
         std::uniform_int_distribution<size_t> vdist(0, vsize-1);
-        for (size_t i = 0; i < niter; i++) {
+        for (size_t i = 1; i <= niter; i++) {
                 Deal(info, generator, hdist, vdist, hero_id, vill_id);
                 vutil += root.CFR(GTO::Node::VILLAIN, vill_id, hero_id);
                 Deal(info, generator, hdist, vdist, hero_id, vill_id);
                 hutil += root.CFR(GTO::Node::HERO, hero_id, vill_id);
-                if (i % 1000000 == 0 && i > 0)
-                        fprintf(stderr, "%d Villain: %.8f, Hero: %.8f\n",
+                if (i % 1000000 == 0)
+                        fprintf(stderr, "%u Villain: %.8f, Hero: %.8f\n",
                                 i, vutil/i, hutil/i);
         }
         hutil /= niter;
@@ -294,7 +294,7 @@ main(int argc, char *argv[])
         err::progname = strdup(basename(argv[0]));
         GTO::Range vill("74,75,54,6d5d,77,44,55,88,63,86,Ad7h,Ad7c,Ad7s,Kd7h,Kd7c,Kd7s,Ad6h,Ad6c,Ad6s,Kd6h,Kd6c,Kd6s,3d2d,6d2d,9d6d,Td6d,Jd6d,Qd6d,Kd6d,Ad6d,Ad8d,Kd8d,Ad3d,Kd3d");
         GTO::Range hero("77-22,ATs-A2s,K2s+,Q7s+,J8s+,T8s+,97s+,86s+,75s+,64s+,53s+,42s+,32s,ATo-A8o,K9o+,QTo+,JTo");
-        Simulate(4135, 550, 250, 825, pokerstove::CardSet("7d4d5h"), vill, hero);
+        Simulate(4135, 550, 250, 500, pokerstove::CardSet("7d4d5h"), vill, hero);
         free(const_cast<char *>(err::progname));
         return 0;
 }
