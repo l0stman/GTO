@@ -72,9 +72,8 @@ InitFlopOrTurn(const GTO::Range& hero,
                         continue;
                 for (auto vit = villain.begin(); vit != villain.end(); ++vit) {
                         if (vit->intersects(init_board) ||
-                            vit->intersects(*hit))
-                                continue;
-                        if (equity.count(GTO::Pair<GTO::Hand>(*hit, *vit)) > 0)
+                            vit->intersects(*hit) ||
+                            equity.count(GTO::Pair<GTO::Hand>(*hit, *vit)) > 0)
                                 continue;
                         CardSet dead(init_board);
                         dead |= *hit;
