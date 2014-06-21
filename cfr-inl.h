@@ -70,7 +70,7 @@ struct Record {
 // For each node under "root" where "player" is last active, print the
 // probability that "player" would take the given action if he was in
 // a given state. "states" is a vector containing all the possible
-// states of "player" during the game. "names" is vector nodes
+// states of "player" during the game. "names" is vector of nodes
 // returned by GetFinalActionNames for the player. "state_name" is the
 // generic name of each state.
 // REQUIRES: the State class should have a ToString() method that returns a
