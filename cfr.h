@@ -128,7 +128,7 @@ public:
         // are the children of the current one.  "num_states" is the
         // number of possible states of the active player at the given
         // node.  Each state is referred to by an unique id between 0
-        // and "num_states"-1.
+        // and num_states-1.
         explicit ParentNode(const string& name,
                             const Player& active_player,
                             const size_t& nstates,
