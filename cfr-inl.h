@@ -121,10 +121,10 @@ FlatPrint(const Node& root,
 }
 
 inline void
-UtilError(const GTO::Node::Player& player, const string& name)
+UtilError(const Node::Player& player, const string& name)
 {
-        err::quit("Don't have utility for %d at the node %s.", player,
-                  name.c_str());
+        err::quit("Don't have utility for %s at the node %s.",
+                  Node::player_names[player], name.c_str());
 }
 
 } // namespace GTO

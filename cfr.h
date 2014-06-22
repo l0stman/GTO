@@ -16,11 +16,15 @@ using std::vector;
 class Node {
 public:
         // Represents the players in the game.
+        // Note: Update the initialization of "player_names" if modified.
         enum Player {
                 HERO,
                 VILLAIN,
                 NOBODY
         };
+
+        // Name of the players in the game.
+        static const char *player_names[];
 
         const string& name() const { return name_; }
         const Player& active_player() const { return active_player_; }
