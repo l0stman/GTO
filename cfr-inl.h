@@ -1,6 +1,7 @@
 #ifndef GTO_CFR_INL_H_
 #define GTO_CFR_INL_H_
 
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -117,6 +118,13 @@ FlatPrint(const Node& root,
           const vector<string>& names)
 {
         FlatPrint(root, player, states, names, "State");
+}
+
+inline void
+UtilError(const GTO::Node::Player& player, const string& name)
+{
+        err::quit("Don't have utility for %d at the node %s.", player,
+                  name.c_str());
 }
 
 } // namespace GTO

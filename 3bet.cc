@@ -42,13 +42,6 @@ struct GameInfo {
         {}
 };
 
-void
-UtilError(const GTO::Node::Player& player, const string& name)
-{
-        err::quit("Don't have utility for %d at the node %s.", player,
-                  name.c_str());
-}
-
 class HeroRaiseFold : public GTO::Leaf {
 public:
         explicit HeroRaiseFold(const string& name, const GameInfo& info)
@@ -70,7 +63,7 @@ public:
                         EV = info_.stack + info_.pot + info_.raise;
                         break;
                 default:
-                        UtilError(player, name());
+                        GTO::UtilError(player, name());
                         break;
                 }
                 return EV;
@@ -104,7 +97,7 @@ public:
                         assert(EQ >= 0);
                         break;
                 default:
-                        UtilError(player, name());
+                        GTO::UtilError(player, name());
                         break;
                 }
                 return EQ*(2*info_.stack+info_.pot);
@@ -135,7 +128,7 @@ public:
                         EV = info_.stack;
                         break;
                 default:
-                        UtilError(player, name());
+                        GTO::UtilError(player, name());
                         break;
                 }
                 return EV;
@@ -166,7 +159,7 @@ public:
                         EV = info_.stack + info_.pot;
                         break;
                 default:
-                        UtilError(player, name());
+                        GTO::UtilError(player, name());
                         break;
                 }
                 return EV;
@@ -202,7 +195,7 @@ public:
                         assert(EQ >= 0);
                         break;
                 default:
-                        UtilError(player, name());
+                        GTO::UtilError(player, name());
                         break;
                 }
                 return info_.stack-info_.bet-turn_bet +
