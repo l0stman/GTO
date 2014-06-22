@@ -23,8 +23,9 @@ public:
                 return equity_.count(p) > 0 ? equity_.at(p) : -1;
         }
 
-        virtual Array LUT(const std::vector<Hand>& hands1,
-                          const std::vector<Hand>& hands2) const;
+        virtual Array<double> LUT(
+                const std::vector<Hand>& hands1,
+                const std::vector<Hand>& hands2) const;
 private:
         std::unordered_map<Pair<Hand>, double> equity_;
 };

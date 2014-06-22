@@ -43,7 +43,7 @@ public:
         // given row and column is the probability that the current
         // active player takes the given action if he's in the given
         // state.
-        Array AverageStrategy() const;
+        Array<double> AverageStrategy() const;
 
         // Test if the node is a leaf.
         bool isleaf() const
@@ -80,15 +80,15 @@ public:
         static void
         GetFinalActionProbs(const Node& node,
                             const Player& player,
-                            Array& probs);
+                            Array<double>& probs);
 
 protected:
         explicit Node(const string& name,
                       const Player& active_player,
                       const vector<Node *>& children,
-                      const Array& regret_sum,
-                      const Array& strategy_sum,
-                      const Array& strategy,
+                      const Array<double>& regret_sum,
+                      const Array<double>& strategy_sum,
+                      const Array<double>& strategy,
                       const vector<double>& utils)
                 : name_(name),
                   active_player_(active_player),
@@ -116,13 +116,13 @@ private:
                    const double& pprob,
                    const double& oprob);
 
-        const string name_;           // Name of the node.
-        const Player active_player_;  // Player that should play at the node.
-        vector<Node *> children_;     // Children of the node.
-        Array regret_sum_;            // Sum of regrets of each action.
-        Array strategy_sum_;          // Sum of all previous strategies.
-        Array strategy_;              // Probabilities of taking each action.
-        vector<double> utils_;        // Utilities of each action.
+        const string name_;          // Name of the node.
+        const Player active_player_; // Player that should play at the node.
+        vector<Node *> children_;    // Children of the node.
+        Array<double> regret_sum_;   // Sum of regrets of each action.
+        Array<double> strategy_sum_; // Sum of all previous strategies.
+        Array<double> strategy_;     // Probabilities of taking each action.
+        vector<double> utils_;       // Utilities of each action.
 };
 
 class ParentNode : public Node {
@@ -140,9 +140,11 @@ public:
                 : Node(name,
                        active_player,
                        children,
-                       Array(nstates, children.size()),
-                       Array(nstates, children.size()),
-                       Array(nstates, children.size(), 1.0/children.size()),
+                       Array<double>(nstates, children.size()),
+                       Array<double>(nstates, children.size()),
+                       Array<double>(nstates,
+                                     children.size(),
+                                     1.0/children.size()),
                        vector<double>(children.size()))
         {
                 if (children.size() == 0)
@@ -170,9 +172,9 @@ public:
                 : Node(name,
                        NOBODY,
                        vector<Node*>(),
-                       Array(),
-                       Array(),
-                       Array(),
+                       Array<double>(),
+                       Array<double>(),
+                       Array<double>(),
                        vector<double>())
         {}
 

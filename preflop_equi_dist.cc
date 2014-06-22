@@ -22,11 +22,11 @@ PreflopEquiDist::PreflopEquiDist()
         fclose(fp);
 }
 
-Array
+Array<double>
 PreflopEquiDist::LUT(const std::vector<PreflopHand>& hands1,
                      const std::vector<PreflopHand>& hands2) const
 {
-        Array equity(hands1.size(), hands2.size());
+        Array<double> equity(hands1.size(), hands2.size());
         for (size_t i = 0; i < hands1.size(); i++)
                 for (size_t j = 0; j < hands2.size(); j++)
                         equity.set(i, j, Equity(hands1[i], hands2[j]));
@@ -46,11 +46,11 @@ SuitCombos::SuitCombos()
                 set_combos(h, v, num);
 }
 
-Array
+Array<short>
 SuitCombos::LUT(const std::vector<PreflopHand>& hands1,
                 const std::vector<PreflopHand>& hands2) const
 {
-        Array combos(hands1.size(), hands2.size());
+        Array<short> combos(hands1.size(), hands2.size());
         for (size_t i = 0; i < hands1.size(); i++)
                 for (size_t j = 0; j < hands2.size(); j++)
                         combos.set(i, j, NumCombos(hands1[i], hands2[j]));

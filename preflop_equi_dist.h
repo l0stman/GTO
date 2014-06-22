@@ -22,8 +22,9 @@ public:
                 return equity_.count(p) > 0 ? equity_.at(p) : -1;
         }
 
-        virtual Array LUT(const std::vector<PreflopHand>& hands1,
-                          const std::vector<PreflopHand>& hands2) const;
+        virtual Array<double> LUT(
+                const std::vector<PreflopHand>& hands1,
+                const std::vector<PreflopHand>& hands2) const;
 private:
         void
         set_equity(const char *h, const char *v, const double& EQ)
@@ -45,16 +46,17 @@ public:
         // Return the number of possible match-ups between a hand
         // represented as "hero" and all the hands represented as
         // "villain" in preflop if we take into account their suits.
-        double NumCombos(const PreflopHand& hero,
-                         const PreflopHand& villain) const
+        short NumCombos(const PreflopHand& hero,
+                        const PreflopHand& villain) const
         {
                 return combos_.at(Pair<PreflopHand>(hero, villain));
         }
 
         // Return a lookup table represented as an array such that
-        // Array.get(i, j) == Equity(hands1[i], hands2[j]).
-        Array LUT(const std::vector<PreflopHand>& hands1,
-                  const std::vector<PreflopHand>& hands2) const;
+        // Array.get(i, j) == NumCombos(hands1[i], hands2[j]).
+        Array<short> LUT(
+                const std::vector<PreflopHand>& hands1,
+                const std::vector<PreflopHand>& hands2) const;
 private:
         void
         set_combos(const char *h, const char *v, const double& n)
@@ -63,7 +65,7 @@ private:
         }
 
         const char *preflop_combos_file_ = "preflop-combos.txt";
-        std::unordered_map<Pair<PreflopHand>, double> combos_;
+        std::unordered_map<Pair<PreflopHand>, short> combos_;
 };
 
 } // namespace GTO

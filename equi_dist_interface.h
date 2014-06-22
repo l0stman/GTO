@@ -19,8 +19,9 @@ public:
 
         // Return a lookup table represented as an array such that
         // Array.get(i, j) == Equity(hands1[i], hands2[j]).
-        virtual Array LUT(const std::vector<Hand>& hand1,
-                          const std::vector<Hand>& hand2) const = 0;
+        virtual Array<double> LUT(
+                const std::vector<Hand>& hand1,
+                const std::vector<Hand>& hand2) const = 0;
 };
 
 template<class Hand>

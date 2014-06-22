@@ -128,11 +128,11 @@ EquiDist::EquiDist(const Range& hero,
         }
 }
 
-Array
+Array<double>
 EquiDist::LUT(const std::vector<Hand>& hands1,
               const std::vector<Hand>& hands2) const
 {
-        Array equity(hands1.size(), hands2.size());
+        Array<double> equity(hands1.size(), hands2.size());
         for (size_t i = 0; i < hands1.size(); i++)
                 for (size_t j = 0; j < hands2.size(); j++)
                         equity.set(i, j, Equity(hands1[i], hands2[j]));

@@ -22,7 +22,7 @@ struct GameInfo {
         const double raise;
         const vector<GTO::Hand> vill_hands;
         const vector<GTO::Hand> hero_hands;
-        const GTO::Array equity;
+        const GTO::Array<double> equity;
 
         explicit GameInfo(const double& stack,
                           const double& pot,
@@ -252,10 +252,7 @@ Simulate(const double& stack,
                                     vsize,
                                     raise_children)
         };
-        GTO::ParentNode root("root",
-                             GTO::Node::HERO,
-                             hsize,
-                             root_children);
+        GTO::ParentNode root("root", GTO::Node::HERO, hsize, root_children);
         double vutil = 0.0;
         double hutil = 0.0;
         size_t niter = 40000000;

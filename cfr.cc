@@ -8,11 +8,11 @@ GetProbsAux(const GTO::Node& node,
             const GTO::Node::Player& player,
             const double& p,
             size_t& idx,
-            GTO::Array& probs)
+            GTO::Array<double>& probs)
 {
         if (node.isleaf())
                 return;
-        GTO::Array strat = node.AverageStrategy();
+        GTO::Array<double> strat = node.AverageStrategy();
         bool isactive = node.active_player() == player;
         bool isterm = true;
 
@@ -45,12 +45,12 @@ const char *Node::player_names[] = {
         "nobody"
 };
 
-Array
+Array<double>
 Node::AverageStrategy() const
 {
         if (isleaf())
-                return Array();
-        Array avg(strategy_sum_.num_rows(), strategy_sum_.num_cols());
+                return Array<double>();
+        Array<double> avg(strategy_sum_.num_rows(), strategy_sum_.num_cols());
         for (size_t s=0; s<avg.num_rows(); s++) {
                 double norm = 0;
                 for (size_t a=0; a<avg.num_cols(); a++)
@@ -79,9 +79,9 @@ Node::CFR(Node* node,
         double util = 0.0;
         bool isactive = node->active_player_ == player;
         size_t id = isactive ? pid : oid;
-        Array& regsum = node->regret_sum_;
-        Array& stratsum = node->strategy_sum_;
-        Array& strat = node->strategy_;
+        Array<double>& regsum = node->regret_sum_;
+        Array<double>& stratsum = node->strategy_sum_;
+        Array<double>& strat = node->strategy_;
 
         for (size_t a=0; a<len; a++) {
                 utils[a] = isactive ?
@@ -147,7 +147,9 @@ Node::GetFinalActionNames(const Node& node,
 }
 
 void
-Node::GetFinalActionProbs(const Node& node, const Player& player, Array& probs)
+Node::GetFinalActionProbs(const Node& node,
+                          const Player& player,
+                          Array<double>& probs)
 {
         for (size_t id = 0; id < probs.num_rows(); id++) {
                 size_t idx = 0;

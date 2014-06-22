@@ -26,7 +26,7 @@ TreePrint(const Node& node,
                 return;
         const std::vector<Node *>& children = node.children();
         if (node.active_player() == player) {
-                GTO::Array strat = node.AverageStrategy();
+                GTO::Array<double> strat = node.AverageStrategy();
                 size_t nstates = strat.num_rows();
                 size_t nactions = strat.num_cols();
                 printf("%s", state_name.c_str());
@@ -84,7 +84,7 @@ FlatPrint(const Node& root,
           const vector<string>& names,
           const std::string& state_name)
 {
-        Array probs(states.size(), names.size());
+        Array<double> probs(states.size(), names.size());
         vector<Record> records;
         double total = 0.0;
 
