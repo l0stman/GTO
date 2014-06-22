@@ -5,6 +5,7 @@
 #include <vector>
 
 namespace GTO {
+using std::size_t;
 using std::vector;
 
 // Represents a two-dimensional array of doubles.
