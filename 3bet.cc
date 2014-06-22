@@ -55,9 +55,10 @@ public:
                 : GTO::Leaf(name), info_(info)
         {}
 
-        double Utility(const Player& player,
-                       const size_t& pid,
-                       const size_t& oid) const
+        virtual double
+        Utility(const Player& player,
+                const size_t& pid,
+                const size_t& oid) const
         {
                 double EV = 0;
 
@@ -85,9 +86,10 @@ public:
                 : GTO::Leaf(name), info_(info)
         {}
 
-        double Utility(const Player& player,
-                       const size_t& pid,
-                       const size_t& oid) const
+        virtual double
+        Utility(const Player& player,
+                const size_t& pid,
+                const size_t& oid) const
         {
                 double EQ = 0;
 
@@ -118,9 +120,10 @@ public:
                 : GTO::Leaf(name), info_(info)
         {}
 
-        double Utility(const Player& player,
-                       const size_t& pid,
-                       const size_t& oid) const
+        virtual double
+        Utility(const Player& player,
+                const size_t& pid,
+                const size_t& oid) const
         {
                 double EV = 0;
 
@@ -148,9 +151,10 @@ public:
                 : GTO::Leaf(name), info_(info)
         {}
 
-        double Utility(const Player& player,
-                       const size_t& pid,
-                       const size_t& oid) const
+        virtual double
+        Utility(const Player& player,
+                const size_t& pid,
+                const size_t& oid) const
         {
                 double EV = 0;
 
@@ -178,6 +182,7 @@ public:
                 : GTO::Leaf(name), info_(info)
         {}
 
+        virtual
         double Utility(const Player& player,
                        const size_t& pid,
                        const size_t& oid) const
