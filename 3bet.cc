@@ -22,7 +22,7 @@ struct GameInfo {
         const double raise;
         const vector<GTO::Hand> vill_hands;
         const vector<GTO::Hand> hero_hands;
-        GTO::Array equity;
+        const GTO::Array equity;
 
         explicit GameInfo(const double& stack,
                           const double& pot,
