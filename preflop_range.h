@@ -15,11 +15,15 @@ namespace GTO {
 class PreflopHand {
 public:
         explicit PreflopHand(const std::string& s)
-                : hand_(Init(s))
+                : hand_(Init(s)),
+                  suit_combos_(s.size() == 2 ? 6 : (s[2] == 's' ? 4 : 12))
         {}
         ~PreflopHand() {}
 
         std::string ToString() const { return hand_; }
+
+        // Return the number of suit combos represented by the hand.
+        short suit_combos() const { return suit_combos_; }
 
         bool
         operator==(const GTO::PreflopHand& rhs) const
@@ -30,6 +34,7 @@ public:
 private:
         std::string Init(const std::string& s);
         const std::string hand_;
+        const short suit_combos_;
 };
 
 } // namespace GTO
