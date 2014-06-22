@@ -39,7 +39,7 @@ GetProbsAux(const GTO::Node& node,
 
 namespace GTO {
 
-const char  *Node::player_names[] = {
+const char *Node::player_names[] = {
         "hero",
         "villain",
         "nobody"
