@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "cfr.h"
+#include "dealer_interface.h"
 
 namespace GTO {
 
@@ -99,6 +100,48 @@ UtilError(const Node::Player& player, const string& name)
 {
         err::quit("Don't have utility for %s at the node %s.",
                   Node::player_names[player], name.c_str());
+}
+
+// Use CFR to update "node" by playing repeatedly "Node::VILLAIN"
+// against "Node::HERO" during "num_iter" iterations then print the
+// result to the standard output at the end. "hero_states" and
+// "vill_states" are vectors containing all the possible states of
+// "Node::HERO" and "Node::VILLAIN" during the game respectively.  And
+// "dealer" is the dealer of the game.
+// REQUIRES: the State class should implement StateInterface.
+template<class State>
+void
+Train(const size_t& num_iter,
+      const vector<State>& hero_states,
+      const vector<State>& vill_states,
+      const string& hero_name,
+      const string& vill_name,
+      DealerInterface& dealer,
+      Node& node)
+{
+        double vutil = 0.0;
+        double hutil = 0.0;
+        size_t hero_id = 0;
+        size_t vill_id = 0;
+
+        for (size_t i = 1; i <= num_iter; i++) {
+                dealer.Deal(hero_id, vill_id);
+                vutil += node.CFR(Node::VILLAIN, vill_id, hero_id);
+                dealer.Deal(hero_id, vill_id);
+                hutil += node.CFR(Node::HERO, hero_id, vill_id);
+                if (i % 1000000 == 0)
+                        fprintf(stderr, "%u Villain: %.8f, Hero: %.8f\n",
+                                i, vutil/i, hutil/i);
+        }
+        hutil /= num_iter;
+        vutil /= num_iter;
+        vector<string> hnames;
+        vector<string> vnames;
+        Node::GetFinalActionNames(node, hnames, vnames);
+        printf("%s: %.4f\n", vill_name.c_str(), vutil);
+        FlatPrint(node, Node::VILLAIN, vill_states, vnames);
+        printf("\n%s: %.4f\n", hero_name.c_str() , hutil);
+        FlatPrint(node, Node::HERO, hero_states, hnames);
 }
 
 } // namespace GTO
