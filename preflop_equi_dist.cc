@@ -38,19 +38,19 @@ SuitCombos::SuitCombos()
         FILE *fp;
         char h[4];
         char v[4];
-        short num;
+        unsigned short num;
 
         if ((fp = fopen(preflop_combos_file_, "r")) == NULL)
                 err::sys("Can't open %s", preflop_combos_file_);
-        while (fscanf(fp, "%s %s %hd", h, v, &num) != EOF)
+        while (fscanf(fp, "%s %s %hu", h, v, &num) != EOF)
                 set_combos(h, v, num);
 }
 
-Array<short>
+Array<unsigned short>
 SuitCombos::LUT(const std::vector<PreflopHand>& hands1,
                 const std::vector<PreflopHand>& hands2) const
 {
-        Array<short> combos(hands1.size(), hands2.size());
+        Array<unsigned short> combos(hands1.size(), hands2.size());
         for (size_t i = 0; i < hands1.size(); i++)
                 for (size_t j = 0; j < hands2.size(); j++)
                         combos.set(i, j, NumCombos(hands1[i], hands2[j]));

@@ -24,7 +24,7 @@ struct GameInfo {
         const vector<GTO::PreflopHand> vill_hands;
         const vector<GTO::PreflopHand> hero_hands;
         const GTO::Array<double> equity;
-        const GTO::Array<short> suit_combos;
+        const GTO::Array<unsigned short> suit_combos;
 
         explicit GameInfo(const double& stack,
                           const double& blinds,
@@ -257,8 +257,8 @@ public:
                 for (;;) {
                         hero_id = Sample(hero_weights_);
                         vill_id = Sample(vill_weights_);
-                        short m = suit_combos_.get(vill_id, hero_id);
-                        short s = vill_hands_[vill_id].suit_combos();
+                        unsigned short m = suit_combos_.get(vill_id, hero_id);
+                        unsigned short s = vill_hands_[vill_id].suit_combos();
                         if (m == s)
                                 return;
                         std::uniform_int_distribution<size_t> dist(0, s-1);
@@ -302,7 +302,7 @@ private:
         }
 
         const vector<GTO::PreflopHand>& vill_hands_;
-        const GTO::Array<short>& suit_combos_;
+        const GTO::Array<unsigned short>& suit_combos_;
         const vector<double> hero_weights_;
         const vector<double> vill_weights_;
 };

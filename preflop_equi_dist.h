@@ -54,18 +54,18 @@ public:
 
         // Return a lookup table represented as an array such that
         // Array.get(i, j) == NumCombos(hands1[i], hands2[j]).
-        Array<short> LUT(
+        Array<unsigned short> LUT(
                 const std::vector<PreflopHand>& hands1,
                 const std::vector<PreflopHand>& hands2) const;
 private:
         void
-        set_combos(const char *h, const char *v, const double& n)
+        set_combos(const char *h, const char *v, const unsigned short& n)
         {
                 combos_[Pair<PreflopHand>(PreflopHand(h), PreflopHand(v))] = n;
         }
 
         const char *preflop_combos_file_ = "preflop-combos.txt";
-        std::unordered_map<Pair<PreflopHand>, short> combos_;
+        std::unordered_map<Pair<PreflopHand>, unsigned short> combos_;
 };
 
 } // namespace GTO
