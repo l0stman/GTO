@@ -277,9 +277,9 @@ Simulate(const double& stack,
         vector<string> vnames;
         GTO::Node::GetFinalActionNames(root, hnames, vnames);
         printf("SB: %.4f\n" , vutil);
-        GTO::FlatPrint(root, GTO::Node::VILLAIN, info.vill_hands,vnames,"Hand");
+        GTO::FlatPrint(root, GTO::Node::VILLAIN, info.vill_hands, vnames);
         printf("\nCO: %.4f\n" , hutil);
-        GTO::FlatPrint(root, GTO::Node::HERO, info.hero_hands, hnames, "Hand");
+        GTO::FlatPrint(root, GTO::Node::HERO, info.hero_hands, hnames);
 }
 } // namespace
 

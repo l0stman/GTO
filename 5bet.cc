@@ -345,7 +345,7 @@ Simulate(const double& stack,
         GTO::ParentNode root("root", GTO::Node::HERO, hsize, root_children);
         double vutil = 0.0;
         double hutil = 0.0;
-        size_t niter = 150000000;
+        size_t niter = 40000000;
         size_t hero_id = 0;
         size_t vill_id = 0;
         RandomId hrand_id(info.hero_hands);
@@ -365,9 +365,9 @@ Simulate(const double& stack,
         vector<string> vnames;
         GTO::Node::GetFinalActionNames(root, hnames, vnames);
         printf("UTG: %.4f\n" , vutil);
-        GTO::FlatPrint(root, GTO::Node::VILLAIN, info.vill_hands,vnames,"Hand");
+        GTO::FlatPrint(root, GTO::Node::VILLAIN, info.vill_hands, vnames);
         printf("\nBTN: %.4f\n" , hutil);
-        GTO::FlatPrint(root, GTO::Node::HERO, info.hero_hands, hnames, "Hand");
+        GTO::FlatPrint(root, GTO::Node::HERO, info.hero_hands, hnames);
 }
 
 } // namespace
