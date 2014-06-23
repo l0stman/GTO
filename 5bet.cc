@@ -7,6 +7,7 @@
 #include <random>
 
 #include "cfr-inl.h"
+#include "dealer_interface.h"
 #include "err.h"
 #include "preflop_equi_dist.h"
 
@@ -240,33 +241,34 @@ private:
 std::mt19937 generator((std::random_device())());
 std::uniform_real_distribution<double> prob_dist(0, 1.0);
 
-class RandomId {
+class Dealer : public GTO::DealerInterface {
 public:
-        explicit RandomId(const vector<GTO::PreflopHand>& hands)
-                : weights_(Init(hands))
+        explicit Dealer(const GameInfo& info)
+                : vill_hands_(info.vill_hands),
+                  suit_combos_(info.suit_combos),
+                  hero_weights_(InitWeights(info.hero_hands)),
+                  vill_weights_(InitWeights(info.vill_hands))
         {}
+        ~Dealer() {}
 
-        size_t
-        Sample() const
+        virtual void
+        Deal(size_t& hero_id, size_t& vill_id)
         {
-                double r = prob_dist(generator);
-                int min = 0;
-                int max = weights_.size()-1;
-                while (min <= max) {
-                        size_t mid = min + ((max-min) >> 1);
-                        if (r < weights_[mid])
-                                max = mid-1;
-                        else if (r < weights_[mid+1])
-                                return mid+1;
-                        else
-                                min = mid+1;
+                for (;;) {
+                        hero_id = Sample(hero_weights_);
+                        vill_id = Sample(vill_weights_);
+                        short m = suit_combos_.get(vill_id, hero_id);
+                        short s = vill_hands_[vill_id].suit_combos();
+                        if (m == s)
+                                return;
+                        std::uniform_int_distribution<size_t> dist(0, s-1);
+                        if (dist(generator) < m)
+                                return;
                 }
-                return min;
         }
-
 private:
         vector<double>
-        Init(const vector<GTO::PreflopHand>& hands)
+        InitWeights(const vector<GTO::PreflopHand>& hands)
         {
                 vector<double> W(hands.size(), 0.0);
                 double total = 0;
@@ -281,39 +283,41 @@ private:
                 return W;
         }
 
-        const vector<double> weights_;
+        size_t
+        Sample(const vector<double>& weights) const
+        {
+                double r = prob_dist(generator);
+                int min = 0;
+                int max = weights.size()-1;
+                while (min <= max) {
+                        size_t mid = min + ((max-min) >> 1);
+                        if (r < weights[mid])
+                                max = mid-1;
+                        else if (r < weights[mid+1])
+                                return mid+1;
+                        else
+                                min = mid+1;
+                }
+                return min;
+        }
+
+        const vector<GTO::PreflopHand>& vill_hands_;
+        const GTO::Array<short>& suit_combos_;
+        const vector<double> hero_weights_;
+        const vector<double> vill_weights_;
 };
 
-void
-Deal(const GameInfo& info,
-     const RandomId& hero_rand_id,
-     const RandomId& vill_rand_id,
-     size_t& hero_id,
-     size_t& vill_id)
-{
-        for (;;) {
-                hero_id = hero_rand_id.Sample();
-                vill_id = vill_rand_id.Sample();
-                short m = info.suit_combos.get(vill_id, hero_id);
-                short s = info.vill_hands[vill_id].suit_combos();
-                if (m == s)
-                        return;
-                std::uniform_int_distribution<size_t> dist(0, s-1);
-                if (dist(generator) < m)
-                        return;
-        }
-}
+} // namespace
 
-void
-Simulate(const double& stack,
-         const double& blinds,
-         const double& raise,
-         const double& three_bet,
-         const double& four_bet,
-         const GTO::PreflopRange& vill,
-         const GTO::PreflopRange& hero)
+int
+main(int argc, char *argv[])
 {
-        GameInfo info(stack, blinds, raise, three_bet, four_bet, vill, hero);
+        err::progname = strdup(basename(argv[0]));
+        GTO::PreflopRange vill("77+,A7s+,K9s+,QTs+,JTs,ATo+,KTo+,QJo");
+        GTO::PreflopRange hero;
+
+        hero.Fill();
+        GameInfo info(100, 1.5, 3, 9, 27, vill, hero);
         size_t vsize = info.vill_hands.size();
         size_t hsize = info.hero_hands.size();
         vector<GTO::Node *> five_bet_children = {
@@ -343,44 +347,14 @@ Simulate(const double& stack,
                                     three_bet_children)
         };
         GTO::ParentNode root("root", GTO::Node::HERO, hsize, root_children);
-        double vutil = 0.0;
-        double hutil = 0.0;
-        size_t niter = 40000000;
-        size_t hero_id = 0;
-        size_t vill_id = 0;
-        RandomId hrand_id(info.hero_hands);
-        RandomId vrand_id(info.vill_hands);
-        for (size_t i = 1; i <= niter; i++) {
-                Deal(info, hrand_id, vrand_id, hero_id, vill_id);
-                vutil += root.CFR(GTO::Node::VILLAIN, vill_id, hero_id);
-                Deal(info, hrand_id, vrand_id, hero_id, vill_id);
-                hutil += root.CFR(GTO::Node::HERO, hero_id, vill_id);
-                if (i % 1000000 == 0)
-                        fprintf(stderr, "%u Villain: %.8f, Hero: %.8f\n",
-                                i, vutil/i, hutil/i);
-        }
-        hutil /= niter;
-        vutil /= niter;
-        vector<string> hnames;
-        vector<string> vnames;
-        GTO::Node::GetFinalActionNames(root, hnames, vnames);
-        printf("UTG: %.4f\n" , vutil);
-        GTO::FlatPrint(root, GTO::Node::VILLAIN, info.vill_hands, vnames);
-        printf("\nBTN: %.4f\n" , hutil);
-        GTO::FlatPrint(root, GTO::Node::HERO, info.hero_hands, hnames);
-}
-
-} // namespace
-
-int
-main(int argc, char *argv[])
-{
-        err::progname = strdup(basename(argv[0]));
-        GTO::PreflopRange vill("77+,A7s+,K9s+,QTs+,JTs,ATo+,KTo+,QJo");
-        GTO::PreflopRange hero;
-
-        hero.Fill();
-        Simulate(100, 1.5, 3, 9, 27, vill, hero);
+        Dealer dealer(info);
+        GTO::Train(100000000,
+                   info.hero_hands,
+                   info.vill_hands,
+                   "BTN",
+                   "UTG",
+                   dealer,
+                   root);
         free(const_cast<char *>(err::progname));
         return 0;
 }

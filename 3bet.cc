@@ -273,13 +273,13 @@ main(int argc, char *argv[])
         };
         GTO::ParentNode root("root", GTO::Node::HERO, hsize, root_children);
         Dealer dealer(info.hero_hands, info.vill_hands);
-        Train(40000000,
-              info.hero_hands,
-              info.vill_hands,
-              "CO",
-              "SB",
-              dealer,
-              root);
+        GTO::Train(40000000,
+                   info.hero_hands,
+                   info.vill_hands,
+                   "CO",
+                   "SB",
+                   dealer,
+                   root);
         free(const_cast<char *>(err::progname));
         return 0;
 }
