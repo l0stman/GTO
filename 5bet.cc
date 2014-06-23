@@ -261,8 +261,8 @@ public:
                         unsigned short s = vill_hands_[vill_id].suit_combos();
                         if (m == s)
                                 return;
-                        std::uniform_int_distribution<size_t> dist(0, s-1);
-                        if (dist(generator) < m)
+                        std::uniform_int_distribution<unsigned short> d(0, s-1);
+                        if (d(generator) < m)
                                 return;
                 }
         }
