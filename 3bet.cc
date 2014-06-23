@@ -7,6 +7,7 @@
 
 #include "cfr.h"
 #include "cfr-inl.h"
+#include "dealer_interface.h"
 #include "err.h"
 #include "equi_dist.h"
 #include "range.h"
@@ -205,32 +206,50 @@ private:
         const GameInfo& info_;
 };
 
-void
-Deal(const GameInfo& info,
-     std::mt19937& generator,
-     std::uniform_int_distribution<size_t>& hdist,
-     std::uniform_int_distribution<size_t>& vdist,
-     size_t& hero_id,
-     size_t& vill_id)
-{
-        for (;;) {
-                hero_id = hdist(generator);
-                vill_id = vdist(generator);
-                if (info.hero_hands[hero_id].disjoint(info.vill_hands[vill_id]))
-                        return;
-        }
-}
+std::mt19937 generator((std::random_device())());
 
-void
-Simulate(const double& stack,
-         const double& pot,
-         const double& bet,
-         const double& raise,
-         const pokerstove::CardSet& board,
-         const GTO::Range& vill,
-         const GTO::Range& hero)
+class Dealer : public GTO::DealerInterface {
+public:
+        typedef std::uniform_int_distribution<size_t> UniDist;
+
+        explicit Dealer(const vector<GTO::Hand>& hero_hands,
+                        const vector<GTO::Hand>& vill_hands)
+                : hero_hands_(hero_hands),
+                  vill_hands_(vill_hands),
+                  hero_dist_(UniDist(0, hero_hands.size()-1)),
+                  vill_dist_(UniDist(0, vill_hands.size()-1))
+        {}
+
+        ~Dealer() {}
+
+        virtual void
+        Deal(size_t& hero_id, size_t& vill_id)
+        {
+                for (;;) {
+                        hero_id = hero_dist_(generator);
+                        vill_id = vill_dist_(generator);
+                        if (hero_hands_[hero_id].disjoint(vill_hands_[vill_id]))
+                                return;
+                }
+        }
+
+private:
+        const vector<GTO::Hand>& hero_hands_;
+        const vector<GTO::Hand>& vill_hands_;
+        UniDist hero_dist_;
+        UniDist vill_dist_;
+};
+
+} // namespace
+
+int
+main(int argc, char *argv[])
 {
-        GameInfo info(stack, pot, bet, raise, board, vill, hero);
+        err::progname = strdup(basename(argv[0]));
+        GTO::Range vill("74,75,54,6d5d,77,44,55,88,63,86,Ad7h,Ad7c,Ad7s,Kd7h,Kd7c,Kd7s,Ad6h,Ad6c,Ad6s,Kd6h,Kd6c,Kd6s,3d2d,6d2d,9d6d,Td6d,Jd6d,Qd6d,Kd6d,Ad6d,Ad8d,Kd8d,Ad3d,Kd3d");
+        GTO::Range hero("77-22,ATs-A2s,K2s+,Q7s+,J8s+,T8s+,97s+,86s+,75s+,64s+,53s+,42s+,32s,ATo-A8o,K9o+,QTo+,JTo");
+        GameInfo info(4135, 550, 250, 500, pokerstove::CardSet("7d4d5h"), vill,
+                      hero);
         size_t vsize = info.vill_hands.size();
         size_t hsize = info.hero_hands.size();
         vector<GTO::Node *> shove_children = {
@@ -253,43 +272,14 @@ Simulate(const double& stack,
                                     raise_children)
         };
         GTO::ParentNode root("root", GTO::Node::HERO, hsize, root_children);
-        double vutil = 0.0;
-        double hutil = 0.0;
-        size_t niter = 40000000;
-        size_t hero_id = 0;
-        size_t vill_id = 0;
-        std::random_device rd;
-        std::mt19937 generator(rd());
-        std::uniform_int_distribution<size_t> hdist(0, hsize-1);
-        std::uniform_int_distribution<size_t> vdist(0, vsize-1);
-        for (size_t i = 1; i <= niter; i++) {
-                Deal(info, generator, hdist, vdist, hero_id, vill_id);
-                vutil += root.CFR(GTO::Node::VILLAIN, vill_id, hero_id);
-                Deal(info, generator, hdist, vdist, hero_id, vill_id);
-                hutil += root.CFR(GTO::Node::HERO, hero_id, vill_id);
-                if (i % 1000000 == 0)
-                        fprintf(stderr, "%u Villain: %.8f, Hero: %.8f\n",
-                                i, vutil/i, hutil/i);
-        }
-        hutil /= niter;
-        vutil /= niter;
-        vector<string> hnames;
-        vector<string> vnames;
-        GTO::Node::GetFinalActionNames(root, hnames, vnames);
-        printf("SB: %.4f\n" , vutil);
-        GTO::FlatPrint(root, GTO::Node::VILLAIN, info.vill_hands, vnames);
-        printf("\nCO: %.4f\n" , hutil);
-        GTO::FlatPrint(root, GTO::Node::HERO, info.hero_hands, hnames);
-}
-} // namespace
-
-int
-main(int argc, char *argv[])
-{
-        err::progname = strdup(basename(argv[0]));
-        GTO::Range vill("74,75,54,6d5d,77,44,55,88,63,86,Ad7h,Ad7c,Ad7s,Kd7h,Kd7c,Kd7s,Ad6h,Ad6c,Ad6s,Kd6h,Kd6c,Kd6s,3d2d,6d2d,9d6d,Td6d,Jd6d,Qd6d,Kd6d,Ad6d,Ad8d,Kd8d,Ad3d,Kd3d");
-        GTO::Range hero("77-22,ATs-A2s,K2s+,Q7s+,J8s+,T8s+,97s+,86s+,75s+,64s+,53s+,42s+,32s,ATo-A8o,K9o+,QTo+,JTo");
-        Simulate(4135, 550, 250, 500, pokerstove::CardSet("7d4d5h"), vill, hero);
+        Dealer dealer(info.hero_hands, info.vill_hands);
+        Train(40000000,
+              info.hero_hands,
+              info.vill_hands,
+              "CO",
+              "SB",
+              dealer,
+              root);
         free(const_cast<char *>(err::progname));
         return 0;
 }
