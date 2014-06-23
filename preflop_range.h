@@ -5,6 +5,7 @@
 #include <unordered_set>
 
 #include "range_interface.h"
+#include "state_interface.h"
 
 namespace GTO {
 
@@ -12,15 +13,13 @@ namespace GTO {
 // number of hand combination is reduced from 1329 to 169.  We
 // distinguish only between pocket pairs, offsuit hand and suited
 // hand.
-class PreflopHand {
+class PreflopHand : public StateInterface {
 public:
         explicit PreflopHand(const std::string& s)
                 : hand_(Init(s)),
                   suit_combos_(s.size() == 2 ? 6 : (s[2] == 's' ? 4 : 12))
         {}
         ~PreflopHand() {}
-
-        std::string ToString() const { return hand_; }
 
         // Return the number of suit combos represented by the hand.
         short suit_combos() const { return suit_combos_; }
@@ -31,6 +30,9 @@ public:
                 return hand_ == rhs.hand_;
         }
 
+        static std::string Name() { return "Hand"; }
+        virtual std::string ToString() const { return hand_; }
+        virtual short NumCombos() const { return suit_combos_; }
 private:
         std::string Init(const std::string& s);
         const std::string hand_;

@@ -10,11 +10,12 @@
 
 #include "err.h"
 #include "range_interface.h"
+#include "state_interface.h"
 
 namespace GTO {
 
 // Represent hole cards.
-class Hand : public CardSet {
+class Hand : public CardSet, public StateInterface {
 public:
         Hand() : CardSet() {}
 
@@ -37,7 +38,9 @@ public:
                                 (c1[t1] == c2[t2] && c1[1-t1]<c2[1-t2]);
         }
 
-        std::string ToString() const { return str(); }
+        static std::string Name() { return "Hand"; }
+        virtual std::string ToString() const { return str(); }
+        virtual short NumCombos() const { return 1; }
 };
 } // namespace GTO
 
