@@ -22,9 +22,9 @@ AddSuited(const string& s, const size_t& pos, Table& range)
 
         if (s[pos] == s[pos+1])
                 GTO::FmtError(s.substr(pos, 3));
-        for (size_t i = 0; i < GTO::kSuits.length(); i++) {
-                h[1] = GTO::kSuits[i];
-                h[3] = GTO::kSuits[i];
+        for (auto s : GTO::kSuits) {
+                h[1] = s;
+                h[3] = s;
                 range.insert(GTO::Hand(h));
         }
 }
@@ -36,11 +36,11 @@ AddOffsuit(const string& s, const size_t& pos, Table& range)
         h[0] = s[pos];
         h[2] = s[pos+1];
 
-        for (size_t i = 0; i < GTO::kSuits.length(); i++)
-                for (size_t j = 0; j < GTO::kSuits.length(); j++)
-                        if (i != j) {
-                                h[1] = GTO::kSuits[i];
-                                h[3] = GTO::kSuits[j];
+        for (auto s1 : GTO::kSuits)
+                for (auto s2 : GTO::kSuits)
+                        if (s1 != s2) {
+                                h[1] = s1;
+                                h[3] = s2;
                                 range.insert(GTO::Hand(h));
                         }
 }
@@ -56,9 +56,9 @@ AddSuitedPlus(const string& s, const size_t& pos, Table& range)
         h[0] = GTO::kRanks[max];
         for (size_t i = min; i < max; ++i) {
                 h[2] = GTO::kRanks[i];
-                for (size_t j = 0; j < GTO::kSuits.length(); ++j) {
-                        h[1] = GTO::kSuits[j];
-                        h[3] = GTO::kSuits[j];
+                for (auto s : GTO::kSuits) {
+                        h[1] = s;
+                        h[3] = s;
                         range.insert(GTO::Hand(h));
                 }
         }
@@ -75,11 +75,11 @@ AddOffsuitPlus(const string& s, const size_t& pos, Table& range)
         h[0] = GTO::kRanks[max];
         for (size_t i = min; i < max; ++i) {
                 h[2] = GTO::kRanks[i];
-                for (size_t j = 0; j < GTO::kSuits.length(); ++j)
-                        for (size_t k = 0; k < GTO::kSuits.length(); ++k)
-                                if (j != k) {
-                                        h[1] = GTO::kSuits[j];
-                                        h[3] = GTO::kSuits[k];
+                for (auto s1 : GTO::kSuits)
+                        for (auto s2 : GTO::kSuits)
+                                if (s1 != s2) {
+                                        h[1] = s1;
+                                        h[3] = s2;
                                         range.insert(GTO::Hand(h));
                                 }
         }
@@ -99,9 +99,9 @@ AddSuitedRange(const string& s, const size_t& pos, Table& range)
         std::pair<size_t,size_t> p = std::minmax(min1, min2);
         for (size_t i = p.first; i<=p.second; ++i) {
                 h[2] = GTO::kRanks[i];
-                for (size_t j = 0; j < GTO::kSuits.length(); ++j) {
-                        h[1] = GTO::kSuits[j];
-                        h[3] = GTO::kSuits[j];
+                for (auto s : GTO::kSuits) {
+                        h[1] = s;
+                        h[3] = s;
                         range.insert(GTO::Hand(h));
                 }
         }
@@ -121,11 +121,11 @@ AddOffsuitRange(const string& s, const size_t& pos, Table& range)
         std::pair<size_t,size_t> p = std::minmax(min1, min2);
         for (size_t i = p.first; i<=p.second; ++i) {
                 h[2] = GTO::kRanks[i];
-                for (size_t j = 0; j < GTO::kSuits.length(); ++j)
-                        for (size_t k = 0; k < GTO::kSuits.length(); ++k)
-                                if (j != k) {
-                                        h[1] = GTO::kSuits[j];
-                                        h[3] = GTO::kSuits[k];
+                for (auto s1 : GTO::kSuits)
+                        for (auto s2 : GTO::kSuits)
+                                if (s1 != s2) {
+                                        h[1] = s1;
+                                        h[3] = s2;
                                         range.insert(GTO::Hand(h));
                                 }
         }
@@ -312,15 +312,15 @@ Range::Fill(const CardSet& dead_cards)
         string c1(2, 'x');
         string c2(2, 'x');
 
-        for (size_t r1 = 0; r1 < kRanks.length(); r1++)
-                for (size_t s1 = 0; s1 < kSuits.length(); s1++) {
-                        c1[0] = kRanks[r1];
-                        c1[1] = kSuits[s1];
-                        for (size_t r2 = 0; r2 < kRanks.length(); r2++)
-                                for (size_t s2 = 0; s2<kSuits.length(); s2++) {
+        for (auto r1 : kRanks)
+                for (auto s1 : kSuits) {
+                        c1[0] = r1;
+                        c1[1] = s1;
+                        for (auto r2 : kRanks)
+                                for (auto s2 : kSuits) {
                                         Hand hand(c1);
-                                        c2[0] = kRanks[r2];
-                                        c2[1] = kSuits[s2];
+                                        c2[0] = r2;
+                                        c2[1] = s2;
                                         CardSet C(c2);
 
                                         if (hand.disjoint(C)) {
@@ -337,9 +337,9 @@ Range::ToVector(const CardSet& board) const
 {
         vector<Hand> hands;
         hands.reserve(Size());
-        for (auto it = begin(); it != end(); ++it)
-                if (board.disjoint(*it))
-                        hands.push_back(*it);
+        for (auto hand : *this)
+                if (board.disjoint(hand))
+                        hands.push_back(hand);
         return hands;
 }
 

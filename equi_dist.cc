@@ -39,20 +39,20 @@ InitRiver(const GTO::Range& hero,
         boost::shared_ptr<PokerHandEvaluator> E(PokerHandEvaluator::alloc("h"));
         PokerEvaluation he, ve;
 
-        for (auto hit = hero.begin(); hit != hero.end(); ++hit) {
-                if (hit->intersects(board))
+        for (auto h : hero) {
+                if (h.intersects(board))
                         continue;
-                for (auto vit = villain.begin(); vit != villain.end(); ++vit) {
-                        if (vit->intersects(board) || vit->intersects(*hit))
+                for (auto v : villain) {
+                        if (v.intersects(board) || v.intersects(h))
                                 continue;
-                        he = E->evaluateHand(*hit, board).high();
-                        ve = E->evaluateHand(*vit, board).high();
+                        he = E->evaluateHand(h, board).high();
+                        ve = E->evaluateHand(v, board).high();
                         if (he == ve)
-                                set(*hit, *vit, 0.5, equity);
+                                set(h, v, 0.5, equity);
                         else if (he > ve)
-                                set(*hit, *vit, 1, equity);
+                                set(h, v, 1, equity);
                         else
-                                set(*hit, *vit, 0, equity);
+                                set(h, v, 0, equity);
                 }
         }
 }
@@ -67,17 +67,17 @@ InitFlopOrTurn(const GTO::Range& hero,
         PokerEvaluation he, ve;
         CardSet all;
 
-        for (auto hit = hero.begin(); hit != hero.end(); ++hit) {
-                if (hit->intersects(init_board))
+        for (auto h : hero) {
+                if (h.intersects(init_board))
                         continue;
-                for (auto vit = villain.begin(); vit != villain.end(); ++vit) {
-                        if (vit->intersects(init_board) ||
-                            vit->intersects(*hit) ||
-                            equity.count(GTO::Pair<GTO::Hand>(*hit, *vit)) > 0)
+                for (auto v : villain) {
+                        if (v.intersects(init_board) ||
+                            v.intersects(h) ||
+                            equity.count(GTO::Pair<GTO::Hand>(h, v)) > 0)
                                 continue;
                         CardSet dead(init_board);
-                        dead |= *hit;
-                        dead |= *vit;
+                        dead |= h;
+                        dead |= v;
                         double shares = 0;
                         size_t total = 0;
                         short N = static_cast<short>(5-init_board.size());
@@ -88,8 +88,8 @@ InitFlopOrTurn(const GTO::Range& hero,
                                 CardSet board(init_board);
                                 for (short i=0; i<N; i++)
                                         board.insert(deck[boards[i]]);
-                                he = E->evaluateHand(*hit, board).high();
-                                ve = E->evaluateHand(*vit, board).high();
+                                he = E->evaluateHand(h, board).high();
+                                ve = E->evaluateHand(v, board).high();
                                 if (he == ve)
                                         shares += 0.5;
                                 else if (he > ve)
@@ -97,8 +97,8 @@ InitFlopOrTurn(const GTO::Range& hero,
                                 ++total;
                         } while (boards.next());
                         if (N > 0) {
-                                set(*hit, *vit, shares/total, equity);
-                                set(*vit, *hit, 1-shares/total, equity);
+                                set(h, v, shares/total, equity);
+                                set(v, h, 1-shares/total, equity);
                         }
                 }
         }

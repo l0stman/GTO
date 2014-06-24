@@ -39,8 +39,8 @@ TreePrint(const Node& node,
                         putchar('\n');
                 }
         }
-        for (auto it = children.begin(); it != children.end(); ++it)
-                TreePrint<State>(**it, player, states);
+        for (auto c : children)
+                TreePrint<State>(*c, player, states);
 }
 
 struct Record {
@@ -90,8 +90,8 @@ FlatPrint(const Node& root,
                 printf("%s range: %.2f %s%c\n", names[n].c_str(), total,
                        State::Name().c_str(), total == 1 ? ' ' : 's');
                 printf("%s\tProb\n", State::Name().c_str());
-                for (auto it = records.begin(); it != records.end(); ++it)
-                        printf("%s\t%.4f\n", it->state.c_str(), it->prob);
+                for (auto r : records)
+                        printf("%s\t%.4f\n", r.state.c_str(), r.prob);
         }
 }
 

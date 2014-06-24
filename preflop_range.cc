@@ -30,9 +30,9 @@ PreflopRange::PreflopRange(const string& in)
         std::pair<size_t, size_t> p;
 
         // Delete spaces from the input string.
-        for (size_t i = 0; i < s.length(); i++)
-                if (!isspace(s[i]))
-                        s[pos++] = s[i];
+        for (char c : s)
+                if (!isspace(c))
+                        s[pos++] = c;
         size_t first = 0;
         for (size_t last = 0; last <= pos; last++)
                 if ((last == pos || s[last] == ',') && first < last) {
@@ -146,9 +146,9 @@ PreflopRange::Fill(const CardSet& dead_cards)
                         range_.insert(PreflopHand(h));
                 }
         h.pop_back();
-        for (auto it = kRanks.begin(); it != kRanks.end(); ++it) {
-                h[0] = *it;
-                h[1] = *it;
+        for (auto r : kRanks) {
+                h[0] = r;
+                h[1] = r;
                 range_.insert(PreflopHand(h));
         }
 }

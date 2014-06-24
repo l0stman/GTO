@@ -101,8 +101,8 @@ protected:
 
         virtual ~Node()
         {
-                for (auto it = children_.begin(); it != children_.end(); ++it)
-                        delete *it;
+                for (auto c : children_)
+                        delete c;
         }
 
 private:
