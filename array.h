@@ -12,9 +12,13 @@ using std::vector;
 template<class Number>
 class Array {
 public:
-        Array() : vect_(vector<Number>(0)), nrows_(0), ncols_(0) {}
+        explicit Array()
+                : vect_(vector<Number>(0)), nrows_(0), ncols_(0)
+        {}
 
-        Array(const size_t& nrows, const size_t& ncols, const Number& init=0.0)
+        explicit Array(const size_t& nrows,
+                       const size_t& ncols,
+                       const Number& init=0.0)
                 : vect_(vector<Number>(nrows*ncols, init)),
                   nrows_(nrows),
                   ncols_(ncols)
