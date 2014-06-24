@@ -23,24 +23,21 @@ TreePrint(const Node& node,
 {
         if (node.isleaf())
                 return;
-        const std::vector<Node *>& children = node.children();
         if (node.active_player() == player) {
-                GTO::Array<double> strat = node.AverageStrategy();
-                size_t nstates = strat.num_rows();
-                size_t nactions = strat.num_cols();
+                Array<double> strat = node.AverageStrategy();
                 printf("%s", State::Name().c_str());
-                for (size_t a = 0; a < nactions; a++)
-                        printf(" | %s", children[a]->name().c_str());
+                for (auto c : node.children())
+                        printf(" | %s", c->name().c_str());
                 putchar('\n');
-                for (size_t s = 0; s < nstates; s++) {
+                for (size_t s = 0; s < strat.num_rows(); s++) {
                         printf("%s", states[s].ToString().c_str());
-                        for (size_t a = 0; a < nactions; a++)
+                        for (size_t a = 0; a < strat.num_cols(); a++)
                                 printf("\t%.4f", strat.get(s, a));
                         putchar('\n');
                 }
         }
-        for (auto c : children)
-                TreePrint<State>(*c, player, states);
+        for (auto c : node.children())
+                TreePrint(*c, player, states);
 }
 
 struct Record {
