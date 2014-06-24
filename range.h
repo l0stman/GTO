@@ -27,6 +27,14 @@ public:
                                   s.c_str());
         }
 
+        explicit Hand(const CardSet& c)
+                : CardSet(c)
+        {
+                if (size() != 2)
+                        err::quit("Hand should contain two cards: %s.",
+                                  c.str().c_str());
+        }
+
         bool operator<(const Hand& rhs) const
         {
                 std::vector<pokerstove::Card> c1 = cards();
