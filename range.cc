@@ -318,7 +318,7 @@ Range::Fill(const CardSet& dead_cards)
                         c1[1] = s1;
                         for (auto r2 : kRanks)
                                 for (auto s2 : kSuits) {
-                                        Hand hand(c1);
+                                        CardSet hand(c1);
                                         c2[0] = r2;
                                         c2[1] = s2;
                                         CardSet C(c2);
@@ -326,7 +326,7 @@ Range::Fill(const CardSet& dead_cards)
                                         if (hand.disjoint(C)) {
                                                 hand.insert(C);
                                                 if (hand.disjoint(dead_cards))
-                                                        Add(hand);
+                                                        Add(Hand(hand));
                                          }
                                 }
                 }
