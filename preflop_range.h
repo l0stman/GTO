@@ -57,7 +57,7 @@ struct hash<GTO::PreflopHand> {
 namespace GTO {
 using pokerstove::CardSet;
 
-// Implements a range of hands in preflop.
+// Implements a range of hands in pre-flop.
 class PreflopRange : RangeInterface<PreflopHand> {
 public:
         typedef std::unordered_set<PreflopHand>::const_iterator const_iterator;

@@ -67,6 +67,7 @@ namespace GTO {
 using std::string;
 using std::vector;
 
+// Implements a range of hands post-flop.
 class Range : public RangeInterface<Hand> {
 public:
         typedef std::unordered_set<Hand>::const_iterator const_iterator;
