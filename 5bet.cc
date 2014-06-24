@@ -260,7 +260,11 @@ public:
                         unsigned short m = suit_combos_.get(vill_id, hero_id);
                         unsigned short s = vill_hands_[vill_id].suit_combos();
                         if (m == s)
-                                return;
+                                return; // there is no possible conflict
+                        // We choose a random hand from those
+                        // represented by vill_hands_[vill_id].  If
+                        // it's one of the possible match-ups, then
+                        // we're good.
                         std::uniform_int_distribution<unsigned short> d(0, s-1);
                         if (d(generator) < m)
                                 return;
