@@ -128,7 +128,7 @@ Node::GetFinalActionNames(const Node& node,
         bool isterm = true;
         for (auto c : node.children()) {
                 if (c->isleaf())
-                        if (node.active_player() == GTO::Node::HERO)
+                        if (node.active_player() == HERO)
                                 hero_names.push_back(c->name());
                         else
                                 vill_names.push_back(c->name());
@@ -137,7 +137,7 @@ Node::GetFinalActionNames(const Node& node,
                 GetFinalActionNames(*c, hero_names, vill_names);
         }
         if (isterm) {
-                if (node.active_player() == GTO::Node::HERO)
+                if (node.active_player() == HERO)
                         vill_names.push_back(node.name());
                 else
                         hero_names.push_back(node.name());
