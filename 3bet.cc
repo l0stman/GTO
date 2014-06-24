@@ -247,7 +247,7 @@ main(int argc, char *argv[])
 {
         err::progname = strdup(basename(argv[0]));
         GTO::Range vill("74,75,54,6d5d,77,44,55,88,63,86,Ad7h,Ad7c,Ad7s,Kd7h,Kd7c,Kd7s,Ad6h,Ad6c,Ad6s,Kd6h,Kd6c,Kd6s,3d2d,6d2d,9d6d,Td6d,Jd6d,Qd6d,Kd6d,Ad6d,Ad8d,Kd8d,Ad3d,Kd3d");
-        GTO::Range hero("77-22,ATs-A2s,K2s+,Q7s+,J8s+,T8s+,97s+,86s+,75s+,64s+,53s+,42s+,32s,ATo-A8o,K9o+,QTo+,JTo");
+        GTO::Range hero("88-22,ATs-A2s,K2s+,Q7s+,J8s+,T8s+,97s+,86s+,75s+,64s+,53s+,42s+,32s,ATo-A8o,K9o+,QTo+,JTo");
         GameInfo info(4135, 550, 250, 500, pokerstove::CardSet("7d4d5h"), vill,
                       hero);
         size_t vsize = info.vill_hands.size();
@@ -273,7 +273,7 @@ main(int argc, char *argv[])
         };
         GTO::ParentNode root("root", GTO::Node::HERO, hsize, root_children);
         Dealer dealer(info.hero_hands, info.vill_hands);
-        GTO::Train(40000000,
+        GTO::Train(200000000,
                    info.hero_hands,
                    info.vill_hands,
                    "CO",
