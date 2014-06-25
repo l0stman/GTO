@@ -32,7 +32,7 @@ private:
                 equity_[Pair<PreflopHand>(PreflopHand(h),PreflopHand(v))] = EQ;
         }
 
-        const char *preflop_equity_file_ = "preflop-matchups.txt";
+        const char *preflop_equity_file_ = "proto/preflop-matchups.txt";
         std::unordered_map<Pair<PreflopHand>, double> equity_;
 };
 
@@ -64,7 +64,7 @@ private:
                 combos_[Pair<PreflopHand>(PreflopHand(h), PreflopHand(v))] = n;
         }
 
-        const char *preflop_combos_file_ = "preflop-combos.txt";
+        const char *preflop_combos_file_ = "proto/preflop-combos.txt";
         std::unordered_map<Pair<PreflopHand>, unsigned short> combos_;
 };
 
