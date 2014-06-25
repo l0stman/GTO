@@ -22,7 +22,7 @@ public:
         ~PreflopHand() {}
 
         // Return the number of suit combos represented by the hand.
-        short suit_combos() const { return suit_combos_; }
+        unsigned short suit_combos() const { return suit_combos_; }
 
         bool
         operator==(const GTO::PreflopHand& rhs) const
@@ -32,7 +32,7 @@ public:
 
         static std::string Name() { return "Hand"; }
         virtual std::string ToString() const { return hand_; }
-        virtual short NumCombos() const { return suit_combos_; }
+        virtual unsigned short NumCombos() const { return suit_combos_; }
 private:
         std::string Init(const std::string& s);
         const std::string hand_;

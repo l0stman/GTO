@@ -48,7 +48,7 @@ public:
 
         static std::string Name() { return "Hand"; }
         virtual std::string ToString() const { return str(); }
-        virtual short NumCombos() const { return 1; }
+        virtual unsigned short NumCombos() const { return 1; }
 };
 } // namespace GTO
 

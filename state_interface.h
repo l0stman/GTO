@@ -16,7 +16,7 @@ public:
 
         // Return the number of "concrete" states that were abstracted
         // by this one.  Should default to 1 in the general case.
-        virtual short NumCombos() const = 0;
+        virtual unsigned short NumCombos() const = 0;
 };
 
 } // namespace GTO

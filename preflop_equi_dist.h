@@ -46,8 +46,8 @@ public:
         // Return the number of possible match-ups between a hand
         // represented as "hero" and all the hands represented as
         // "villain" in preflop if we take into account their suits.
-        short NumCombos(const PreflopHand& hero,
-                        const PreflopHand& villain) const
+        unsigned short
+        NumCombos(const PreflopHand& hero, const PreflopHand& villain) const
         {
                 return combos_.at(Pair<PreflopHand>(hero, villain));
         }
