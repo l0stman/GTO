@@ -39,7 +39,6 @@
            #:name
            #:children
            #:leafp
-           #:infoset
            #:active-player))
 
 (defpackage #:gto
