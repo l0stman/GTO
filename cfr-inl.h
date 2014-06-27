@@ -18,7 +18,7 @@ namespace GTO {
 template<class State>
 void
 TreePrint(const Node& node,
-          const Node::Player& player,
+          Node::Player player,
           const std::vector<State>& states)
 {
         if (node.isleaf())
@@ -44,7 +44,7 @@ struct Record {
         string state;
         double prob;
 
-        explicit Record(const string& state, const double& prob)
+        explicit Record(const string& state, double prob)
                 : state(state), prob(prob)
         {}
 
@@ -63,7 +63,7 @@ struct Record {
 template<class State>
 void
 FlatPrint(const Node& root,
-          const Node::Player& player,
+          Node::Player player,
           const vector<State>& states,
           const vector<string>& names)
 {
@@ -93,7 +93,7 @@ FlatPrint(const Node& root,
 }
 
 inline void
-UtilError(const Node::Player& player, const string& name)
+UtilError(Node::Player player, const string& name)
 {
         err::quit("Don't have utility for %s at the node %s.",
                   Node::player_names[player], name.c_str());
@@ -108,7 +108,7 @@ UtilError(const Node::Player& player, const string& name)
 // REQUIRES: the State class should implement StateInterface.
 template<class State>
 void
-Train(const size_t& num_iter,
+Train(size_t num_iter,
       const vector<State>& hero_states,
       const vector<State>& vill_states,
       const string& hero_name,

@@ -25,10 +25,10 @@ struct GameInfo {
         const vector<GTO::Hand> hero_hands;
         const GTO::Array<double> equity;
 
-        explicit GameInfo(const double& stack,
-                          const double& pot,
-                          const double& bet,
-                          const double& raise,
+        explicit GameInfo(double stack,
+                          double pot,
+                          double bet,
+                          double raise,
                           const pokerstove::CardSet& board,
                           const GTO::Range& vill,
                           const GTO::Range& hero)
@@ -50,9 +50,7 @@ public:
         {}
 
         virtual double
-        Utility(const Player& player,
-                const size_t& pid,
-                const size_t& oid) const
+        Utility(Player player, size_t pid, size_t oid) const
         {
                 double EV = 0;
 
@@ -81,9 +79,7 @@ public:
         {}
 
         virtual double
-        Utility(const Player& player,
-                const size_t& pid,
-                const size_t& oid) const
+        Utility(Player player, size_t pid, size_t oid) const
         {
                 double EQ = 0;
 
@@ -115,9 +111,7 @@ public:
         {}
 
         virtual double
-        Utility(const Player& player,
-                const size_t& pid,
-                const size_t& oid) const
+        Utility(Player player, size_t pid, size_t oid) const
         {
                 double EV = 0;
 
@@ -146,9 +140,7 @@ public:
         {}
 
         virtual double
-        Utility(const Player& player,
-                const size_t& pid,
-                const size_t& oid) const
+        Utility(Player player, size_t pid, size_t oid) const
         {
                 double EV = 0;
 
@@ -177,9 +169,7 @@ public:
         {}
 
         virtual
-        double Utility(const Player& player,
-                       const size_t& pid,
-                       const size_t& oid) const
+        double Utility(Player player, size_t pid, size_t oid) const
         {
                 double turn_pot = info_.pot + 2*info_.bet;
                 double turn_bet = 2.0/3*turn_pot;

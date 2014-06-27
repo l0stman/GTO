@@ -26,11 +26,11 @@ struct GameInfo {
         const GTO::Array<double> equity;
         const GTO::Array<unsigned short> suit_combos;
 
-        explicit GameInfo(const double& stack,
-                          const double& blinds,
-                          const double& raise,
-                          const double& three_bet,
-                          const double& four_bet,
+        explicit GameInfo(double stack,
+                          double blinds,
+                          double raise,
+                          double three_bet,
+                          double four_bet,
                           const GTO::PreflopRange& vill,
                           const GTO::PreflopRange& hero)
                 : stack(stack),
@@ -52,9 +52,7 @@ public:
         {}
 
         virtual double
-        Utility(const Player& player,
-                const size_t& pid,
-                const size_t& oid) const
+        Utility(Player player, size_t pid, size_t oid) const
         {
                 double EV = 0;
 
@@ -82,9 +80,7 @@ public:
         {}
 
         virtual double
-        Utility(const Player& player,
-                const size_t& pid,
-                const size_t& oid) const
+        Utility(Player player, size_t pid, size_t oid) const
         {
                 double EQ = 0;
 
@@ -116,9 +112,7 @@ public:
         {}
 
         virtual double
-        Utility(const Player& player,
-                const size_t& pid,
-                const size_t& oid) const
+        Utility(Player player, size_t pid, size_t oid) const
         {
                 double EV = 0;
 
@@ -146,9 +140,7 @@ public:
         {}
 
         virtual double
-        Utility(const Player& player,
-                const size_t& pid,
-                const size_t& oid) const
+        Utility(Player player, size_t pid, size_t oid) const
         {
                 double EV = 0;
 
@@ -176,9 +168,7 @@ public:
         {}
 
         virtual double
-        Utility(const Player& player,
-                const size_t& pid,
-                const size_t& oid) const
+        Utility(Player player, size_t pid, size_t oid) const
         {
                 double flop_pot = info_.blinds + 2*info_.raise;
                 double flop_bet = 2.0/3*flop_pot;
@@ -214,9 +204,7 @@ public:
         {}
 
         virtual double
-        Utility(const Player& player,
-                const size_t& pid,
-                const size_t& oid) const
+        Utility(Player player, size_t pid, size_t oid) const
         {
                 double EV = 0;
 

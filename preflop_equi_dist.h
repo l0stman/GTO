@@ -27,7 +27,7 @@ public:
                 const std::vector<PreflopHand>& hands2) const;
 private:
         void
-        set_equity(const char *h, const char *v, const double& EQ)
+        set_equity(const char *h, const char *v, double EQ)
         {
                 equity_[Pair<PreflopHand>(PreflopHand(h),PreflopHand(v))] = EQ;
         }
@@ -59,7 +59,7 @@ public:
                 const std::vector<PreflopHand>& hands2) const;
 private:
         void
-        set_combos(const char *h, const char *v, const unsigned short& n)
+        set_combos(const char *h, const char *v, unsigned short n)
         {
                 combos_[Pair<PreflopHand>(PreflopHand(h), PreflopHand(v))] = n;
         }

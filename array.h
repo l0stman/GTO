@@ -16,9 +16,9 @@ public:
                 : vect_(vector<Number>(0)), nrows_(0), ncols_(0)
         {}
 
-        explicit Array(const size_t& nrows,
-                       const size_t& ncols,
-                       const Number& init=0.0)
+        explicit Array(size_t nrows,
+                       size_t ncols,
+                       Number init=0.0)
                 : vect_(vector<Number>(nrows*ncols, init)),
                   nrows_(nrows),
                   ncols_(ncols)
@@ -27,19 +27,19 @@ public:
         size_t num_rows() const { return nrows_; }
         size_t num_cols() const { return ncols_; }
 
-        Number get(const size_t& row, const size_t& col) const
+        Number get(size_t row, size_t col) const
         {
                 assert(row < nrows_ && col < ncols_);
                 return vect_[row*ncols_+col];
         }
 
-        void set(const size_t& row, const size_t& col, const Number& val)
+        void set(size_t row, size_t col, Number val)
         {
                 assert(row < nrows_ && col < ncols_);
                 vect_[row*ncols_+col] = val;
         }
 
-        void inc(const size_t& row, const size_t& col, const Number& val)
+        void inc(size_t row, size_t col, Number val)
         {
                 assert(row < nrows_ && col < ncols_);
                 vect_[row*ncols_+col] += val;

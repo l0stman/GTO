@@ -24,7 +24,7 @@ typedef std::unordered_map<GTO::Pair<GTO::Hand>, double> Table;
 inline void
 set(const GTO::Hand& hero,
     const GTO::Hand& villain,
-    const double& val,
+    double val,
     Table& equity)
 {
         equity[GTO::Pair<GTO::Hand>(hero, villain)] = val;

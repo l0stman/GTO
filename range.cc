@@ -14,7 +14,7 @@ using std::string;
 typedef std::unordered_set<GTO::Hand> Table;
 
 void
-AddSuited(const string& s, const size_t& pos, Table& range)
+AddSuited(const string& s, size_t pos, Table& range)
 {
         string h(4, 'x');
         h[0] = s[pos];
@@ -30,7 +30,7 @@ AddSuited(const string& s, const size_t& pos, Table& range)
 }
 
 void
-AddOffsuit(const string& s, const size_t& pos, Table& range)
+AddOffsuit(const string& s, size_t pos, Table& range)
 {
         string h(4, 'x');
         h[0] = s[pos];
@@ -46,7 +46,7 @@ AddOffsuit(const string& s, const size_t& pos, Table& range)
 }
 
 void
-AddSuitedPlus(const string& s, const size_t& pos, Table& range)
+AddSuitedPlus(const string& s, size_t pos, Table& range)
 {
         string h(4, 'x');
         size_t min = 0;
@@ -65,7 +65,7 @@ AddSuitedPlus(const string& s, const size_t& pos, Table& range)
 }
 
 void
-AddOffsuitPlus(const string& s, const size_t& pos, Table& range)
+AddOffsuitPlus(const string& s, size_t pos, Table& range)
 {
         string h(4, 'x');
         size_t min = 0;
@@ -86,7 +86,7 @@ AddOffsuitPlus(const string& s, const size_t& pos, Table& range)
 }
 
 void
-AddSuitedRange(const string& s, const size_t& pos, Table& range)
+AddSuitedRange(const string& s, size_t pos, Table& range)
 {
         string h(4, 'x');
         size_t min1, min2, max1, max2;
@@ -108,7 +108,7 @@ AddSuitedRange(const string& s, const size_t& pos, Table& range)
 }
 
 void
-AddOffsuitRange(const string& s, const size_t& pos, Table& range)
+AddOffsuitRange(const string& s, size_t pos, Table& range)
 {
         string h(4, 'x');
         size_t min1, min2, max1, max2;
@@ -132,7 +132,7 @@ AddOffsuitRange(const string& s, const size_t& pos, Table& range)
 }
 
 void
-AddPairsRange(const string& s, const size_t& pos, Table& range)
+AddPairsRange(const string& s, size_t pos, Table& range)
 {
         string h(2, 'x');
         std::pair<size_t,size_t> p = std::minmax(
@@ -146,7 +146,7 @@ AddPairsRange(const string& s, const size_t& pos, Table& range)
 }
 
 void
-AddPairsPlus(const string& s, const size_t& pos, Table& range)
+AddPairsPlus(const string& s, size_t pos, Table& range)
 {
         string h(2, 'x');
         size_t r = GTO::GetRank('A');
@@ -159,7 +159,7 @@ AddPairsPlus(const string& s, const size_t& pos, Table& range)
 }
 
 void
-AddSingleSuitRange(const string& s, const size_t& pos, Table& range)
+AddSingleSuitRange(const string& s, size_t pos, Table& range)
 {
         string h(4, 'x');
         size_t r1 = GTO::GetRank(s[pos]);
@@ -182,7 +182,7 @@ AddSingleSuitRange(const string& s, const size_t& pos, Table& range)
 }
 
 void
-AddSingleSuitPlus(const string& s, const size_t& pos, Table& range)
+AddSingleSuitPlus(const string& s, size_t pos, Table& range)
 {
         string h(4, 'x');
         std::pair<size_t,size_t> p = std::minmax(

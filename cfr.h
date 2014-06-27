@@ -32,9 +32,7 @@ public:
 
         // Return the utility of "player" at a leaf node. "pid" is the
         // stade id of "player" and "oid" the state id of his opponent.
-        virtual double Utility(const Player& player,
-                               const size_t& pid,
-                               const size_t& oid) const = 0;
+        virtual double Utility(Player player, size_t pid, size_t oid) const = 0;
 
         // Return the average info set mixed strategy across all
         // iterations.  The returned value is an Array.  The rows
@@ -55,7 +53,7 @@ public:
         // using the counterfactual regret minimization algorithm to
         // update the game tree under node.  "pid" is the state id of
         // "player" and "oid" the state id of his opponent.
-        double CFR(const Player& player, const size_t& pid, const size_t& oid)
+        double CFR(Player player, size_t pid, size_t oid)
         {
                 return CFR(this, player, pid, oid, 1.0, 1.0);
         }
@@ -79,12 +77,12 @@ public:
         // number j if his state id is i.
         static void
         GetFinalActionProbs(const Node& node,
-                            const Player& player,
+                            Player player,
                             Array<double>& probs);
 
 protected:
         explicit Node(const string& name,
-                      const Player& active_player,
+                      Player active_player,
                       const vector<Node *>& children,
                       const Array<double>& regret_sum,
                       const Array<double>& strategy_sum,
@@ -110,11 +108,11 @@ private:
         // "pprob" and "oprob" are the reaching probabilities of "node" for
         // "player" and his opponent respectively.
         double CFR(Node* node,
-                   const Player& player,
-                   const size_t& pid,
-                   const size_t& oid,
-                   const double& pprob,
-                   const double& oprob);
+                   Player player,
+                   size_t pid,
+                   size_t oid,
+                   double pprob,
+                   double oprob);
 
         const string name_;          // Name of the node.
         const Player active_player_; // Player that should play at the node.
@@ -134,8 +132,8 @@ public:
         // node.  Each state is referred to by an unique id between 0
         // and num_states-1.
         explicit ParentNode(const string& name,
-                            const Player& active_player,
-                            const size_t& nstates,
+                            Player active_player,
+                            size_t nstates,
                             const vector<Node *>& children)
                 : Node(name,
                        active_player,
@@ -155,9 +153,7 @@ of nodes.", name.c_str());
         ~ParentNode() {}
 
         // A non-terminal node doesn't need this method.
-        double Utility(const Player& player,
-                       const size_t& pid,
-                       const size_t& oid) const
+        double Utility(Player player, size_t pid, size_t oid) const
         {
                 assert(false);
                 return 0;

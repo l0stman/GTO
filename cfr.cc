@@ -4,9 +4,9 @@ namespace {
 
 void
 GetProbsAux(const GTO::Node& node,
-            const size_t& id,
-            const GTO::Node::Player& player,
-            const double& p,
+            size_t id,
+            GTO::Node::Player player,
+            double p,
             size_t& idx,
             GTO::Array<double>& probs)
 {
@@ -66,11 +66,11 @@ Node::AverageStrategy() const
 
 double
 Node::CFR(Node* node,
-          const Player& player,
-          const size_t& pid,
-          const size_t& oid,
-          const double& pprob,
-          const double& oprob)
+          Player player,
+          size_t pid,
+          size_t oid,
+          double pprob,
+          double oprob)
 {
         if (node->isleaf())
                 return node->Utility(player, pid, oid);
@@ -146,7 +146,7 @@ Node::GetFinalActionNames(const Node& node,
 
 void
 Node::GetFinalActionProbs(const Node& node,
-                          const Player& player,
+                          Player player,
                           Array<double>& probs)
 {
         for (size_t id = 0; id < probs.num_rows(); id++) {

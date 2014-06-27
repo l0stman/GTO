@@ -19,16 +19,13 @@ FmtError(const string& s)
 }
 
 inline size_t
-GetRank(const char& c)
+GetRank(char c)
 {
         return kRanks.find(c);
 }
 
 inline void
-ParseRanks(const string& s,
-           const size_t& pos,
-           size_t& min,
-           size_t& max)
+ParseRanks(const string& s, size_t pos, size_t& min, size_t& max)
 {
         std::pair<size_t,size_t> p = std::minmax(
                 GetRank(s[pos]), GetRank(s[pos+1]));
@@ -37,19 +34,19 @@ ParseRanks(const string& s,
 }
 
 inline bool
-IsSuit(const char& c)
+IsSuit(char c)
 {
         return c == 'c' || c == 'd' || c == 'h' || c == 's';
 }
 
 inline bool
-IsRank(const char& c)
+IsRank(char c)
 {
         return GetRank(c) != string::npos;
 }
 
 inline bool
-IsHand(const string& s, const size_t& pos)
+IsHand(const string& s, size_t pos)
 {
         return IsRank(s[pos]) && IsRank(s[pos+1]);
 }
