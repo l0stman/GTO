@@ -55,7 +55,8 @@ public:
         // "player" and "oid" the state id of his opponent.
         double CFR(Player player, size_t pid, size_t oid)
         {
-                return CFR(this, player, pid, oid, 1.0, 1.0);
+                return isleaf() ? Utility(player, pid, oid) :
+                        CFR(this, player, pid, oid, 1.0, 1.0);
         }
 
         // For each player, get the names of the nodes under "node"
@@ -105,8 +106,9 @@ protected:
 
 private:
         // The public method is just a thin wrapper around this one.
-        // "pprob" and "oprob" are the reaching probabilities of "node" for
-        // "player" and his opponent respectively.
+        // "pprob" and "oprob" are the reaching probabilities of
+        // "node" for "player" and his opponent respectively. And
+        // "node" is not a leaf.
         double CFR(Node* node,
                    Player player,
                    size_t pid,

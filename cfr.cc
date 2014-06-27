@@ -72,8 +72,6 @@ Node::CFR(Node* node,
           double pprob,
           double oprob)
 {
-        if (node->isleaf())
-                return node->Utility(player, pid, oid);
         size_t len = node->children_.size();
         vector<double>& utils = node->utils_;
         double util = 0.0;
@@ -84,19 +82,22 @@ Node::CFR(Node* node,
         Array<double>& strat = node->strategy_;
 
         for (size_t a=0; a<len; a++) {
-                utils[a] = isactive ?
-                        CFR(node->children_[a],
-                            player,
-                            pid,
-                            oid,
-                            pprob*strat.get(pid, a),
-                            oprob) :
-                        CFR(node->children_[a],
-                            player,
-                            pid,
-                            oid,
-                            pprob,
-                            oprob*strat.get(oid, a));
+                if (node->children_[a]->isleaf())
+                        utils[a] = node->children_[a]->Utility(player, pid,oid);
+                else if (isactive)
+                        utils[a] = CFR(node->children_[a],
+                                       player,
+                                       pid,
+                                       oid,
+                                       pprob*strat.get(pid, a),
+                                       oprob);
+                else
+                        utils[a] = CFR(node->children_[a],
+                                       player,
+                                       pid,
+                                       oid,
+                                       pprob,
+                                       oprob*strat.get(oid, a));
                 util += utils[a] * strat.get(id, a);
         }
         if (isactive) {
