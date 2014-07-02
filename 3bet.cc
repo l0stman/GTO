@@ -1,4 +1,18 @@
+// This a 3-bet shove game on the flop in an unraised pot.  The SB
+// leads out by betting a certain amount, it's folded to a player in
+// CO who can fold, raise, or flat call.  If he flat calls, he's going
+// to call another bet equal to 2/3 of the pot on the turn.  If he
+// raises, the SB can fold or move all-in.  Then, the CO can call or
+// fold.  The SB betting range and the CO limping range should be
+// supplied as other parameters such as the bet size.  And a GTO
+// strategy is computed for each player.
+// Usage:
+// $ 3bet -h
+// $ 3bet -f -N <3bet_example.txt
+
 #include <libgen.h>
+#include <limits.h>
+#include <unistd.h>
 
 #include <cstdlib>
 #include <cstring>
@@ -230,16 +244,88 @@ private:
         UniDist vill_dist_;
 };
 
+void
+Usage()
+{
+        fprintf(stderr, "usage: %s [-h] [-f] [-N] [-n niter]\n", err::progname);
+        fprintf(stderr, "  -h\t\t-- print this help message\n");
+        fprintf(stderr, "  -f\t\t-- allow the CO to have a flat calling range\
+\n");
+        fprintf(stderr, "  -N\t\t-- non-interactive mode, don't prompt the user\
+ for parameters\n");
+        fprintf(stderr, "  -n niter\t-- number of iterations for the simulation\
+\n");
+        exit(1);
+}
+
+size_t num_iter = 200000000;
+bool fflag = false;
+bool iflag = true;
+
+// Return a string read from "stdin" and drop the newline.
+char *
+ReadLine()
+{
+        static char buf[BUFSIZ];
+        if (fgets(buf, sizeof(buf), stdin) == NULL) {
+                if (feof(stdin))
+                        exit(1);
+                else
+                        err::sys("Read");
+        }
+        buf[strlen(buf)-1] = '\0';
+        return buf;
+}
+
 } // namespace
 
 int
 main(int argc, char *argv[])
 {
+        int ch;
+        double stack, pot, bet, raise;
+
         err::progname = strdup(basename(argv[0]));
-        GTO::Range vill("74,75,54,6d5d,77,44,55,88,63,86,Ad7h,Ad7c,Ad7s,Kd7h,Kd7c,Kd7s,Ad6h,Ad6c,Ad6s,Kd6h,Kd6c,Kd6s,3d2d,6d2d,9d6d,Td6d,Jd6d,Qd6d,Kd6d,Ad6d,Ad8d,Kd8d,Ad3d,Kd3d");
-        GTO::Range hero("88-22,ATs-A2s,K2s+,Q7s+,J8s+,T8s+,97s+,86s+,75s+,64s+,53s+,42s+,32s,ATo-A8o,K9o+,QTo+,JTo");
-        GameInfo info(4135, 550, 250, 500, pokerstove::CardSet("7d4d5h"), vill,
-                      hero);
+        while ((ch = getopt(argc, argv, "hfNn:")) != -1) {
+                switch (ch) {
+                case 'n':
+                        num_iter = strtol(optarg, NULL, 10);
+                        break;
+                case 'N':
+                        iflag = false;
+                        break;
+                case 'f':
+                        fflag = true;
+                        break;
+                case 'h':
+                        // fall through
+                default:
+                        Usage();
+                        break;
+                }
+        }
+        if (iflag)
+                fprintf(stderr, "Enter the starting stack size: ");
+        fscanf(stdin, "%lf\n", &stack);
+        if (iflag)
+                fprintf(stderr, "Enter SB's bet size: ");
+        fscanf(stdin, "%lf\n", &bet);
+        if (iflag)
+                fprintf(stderr, "Enter the pot size after SB bets: ");
+        fscanf(stdin, "%lf\n", &pot);
+        if (iflag)
+                fprintf(stderr, "Enter CO's raise size: ");
+        fscanf(stdin, "%lf\n", &raise);
+        if (iflag)
+                fprintf(stderr, "Enter the board: ");
+        pokerstove::CardSet board(ReadLine());
+        if (iflag)
+                fprintf(stderr, "Enter the SB's range: ");
+        GTO::Range vill(ReadLine());
+        if (iflag)
+                fprintf(stderr, "Enter the CO's range: ");
+        GTO::Range hero(ReadLine());
+        GameInfo info(stack, pot, bet, raise, board, vill, hero);
         size_t vsize = info.vill_hands.size();
         size_t hsize = info.hero_hands.size();
         vector<GTO::Node *> shove_children = {
@@ -253,17 +339,31 @@ main(int argc, char *argv[])
                                     hsize,
                                     shove_children)
         };
-        vector<GTO::Node *> root_children = {
-                new HeroFold("Folding", info),
-                new HeroFlatCall("Flat calling", info),
-                new GTO::ParentNode("Raising",
-                                    GTO::Node::VILLAIN,
-                                    vsize,
-                                    raise_children)
-        };
+        vector<GTO::Node *> root_children;
+        if (fflag)
+                root_children = {
+                        new HeroFold("Folding", info),
+                        new HeroFlatCall("Flat calling", info),
+                        new GTO::ParentNode("Raising",
+                                            GTO::Node::VILLAIN,
+                                            vsize,
+                                            raise_children)
+                };
+        else
+                root_children = {
+                        new HeroFold("Folding", info),
+                        new GTO::ParentNode("Raising",
+                                            GTO::Node::VILLAIN,
+                                            vsize,
+                                            raise_children)
+                };
+
         GTO::ParentNode root("root", GTO::Node::HERO, hsize, root_children);
         Dealer dealer(info.hero_hands, info.vill_hands);
-        GTO::Train(200000000,
+        printf("Stack\t: %.2f\nPot\t: %.2f\nBet\t: %.2f\nRaise\t: %.2f\n\
+Board\t: %s\n\n", info.stack, info.pot, info.bet, info.raise,
+               board.str().c_str());
+        GTO::Train(num_iter,
                    info.hero_hands,
                    info.vill_hands,
                    "CO",
