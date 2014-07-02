@@ -1,10 +1,10 @@
+#include "err.h"
+
 #include <cerrno>
 #include <cstdio>
 #include <cstdlib>
 #include <cstdarg>
 #include <cstring>
-
-#include "err.h"
 
 namespace err {
 const char *progname;
@@ -22,8 +22,6 @@ quit(const char *fmt, ...)
         exit(EXIT_FAILURE);
 }
 
-// Fatal error related to a system call.
-// Print a message and terminate.
 void
 sys(const char *fmt, ...)
 {
@@ -37,7 +35,6 @@ sys(const char *fmt, ...)
         exit(EXIT_FAILURE);
 }
 
-// Warn the user by printing a message.
 void
 warn(const char *fmt, ...)
 {
