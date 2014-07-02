@@ -14,7 +14,7 @@ INCLUDES	= -I /usr/local/include -I $(PREF)/lib
 5BET_OBJS	= 5bet.o preflop_range.o preflop_equi_dist.o cfr.o err.o
 PROGNAMES	= 3bet 5bet
 
-all : $(PROGNAMES) tags
+all : $(PROGNAMES)
 3bet : $(3BET_OBJS)
 	$(CC) $(LIBDIRS) -o $@ $(3BET_OBJS) $(LDFLAGS)
 
