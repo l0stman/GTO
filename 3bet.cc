@@ -273,7 +273,9 @@ ReadLine()
                 else
                         err::sys("Read");
         }
-        buf[strlen(buf)-1] = '\0';
+        size_t len = strlen(buf)-1;
+        if (buf[len] == '\n')
+                buf[len] = '\0';
         return buf;
 }
 
