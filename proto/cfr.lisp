@@ -79,6 +79,8 @@ to by an unique id between 0 and NUM-STATES - 1."
   (check-type utility function)
   (%make-node :name name :active-player 'nobody :utility utility))
 
+(declaim (inline leafp cfr))
+
 (defun leafp (n)
   "Return true if N is a leaf node."
   (and (typep n 'node) (eq (children n) +empty-children+)))
@@ -110,6 +112,11 @@ counterfactual regret minimization algorithm. PPROB and OPROB are the
 reaching probabilities of the current node for PLAYER and his opponent
 respectively. PID is the state id of PLAYER and OID the state id of
 his opponent."
+  (if (leafp node)
+      (funcall (the function (utility node)) player pid oid)
+      (%cfr node player pprob oprob pid oid)))
+
+(defun %cfr (node player pprob oprob pid oid)
   (declare (optimize speed)
            (double-float pprob oprob)
            #+sbcl (sb-ext:muffle-conditions sb-ext:compiler-note))
@@ -119,26 +126,29 @@ his opponent."
         (strategy-sum (strategy-sum node)))
     (declare ((simple-array node) children)
              ((simple-array double-float) strategy regret-sum strategy-sum))
-    (when (eq children +empty-children+)
-      (return-from cfr (funcall (the function (utility node)) player pid oid)))
     (let ((utils (utils node))
           (id (if (eq (active-player node) player) pid oid))
           (util 0.0d0))
       (dotimes (a (length children))
         (setf (aref utils a)
-              (if (eq (active-player node) player)
-                  (cfr (aref children a)
-                       player
-                       (* (aref strategy id a) pprob)
-                       oprob
-                       pid
-                       oid)
-                  (cfr (aref children a)
-                       player
-                       pprob
-                       (* (aref strategy id a) oprob)
-                       pid
-                       oid)))
+              (cond ((leafp (aref children a))
+                     (funcall (the function (utility (aref children a)))
+                              player
+                              pid
+                              oid))
+                    ((eq (active-player node) player)
+                     (%cfr (aref children a)
+                          player
+                          (* (aref strategy id a) pprob)
+                          oprob
+                          pid
+                          oid))
+                    (t (%cfr (aref children a)
+                            player
+                            pprob
+                            (* (aref strategy id a) oprob)
+                            pid
+                            oid))))
         (incf util (* (aref strategy id a) (aref utils a))))
       (when (eq (active-player node) player)
         (let ((norm 0.0d0))
