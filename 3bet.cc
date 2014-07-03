@@ -316,16 +316,16 @@ main(int argc, char *argv[])
         }
         if (iflag)
                 fprintf(stderr, "Enter the starting stack size: ");
-        fscanf(stdin, "%lf\n", &stack);
+        scanf("%lf", &stack);
         if (iflag)
                 fprintf(stderr, "Enter SB's bet size: ");
-        fscanf(stdin, "%lf\n", &bet);
+        scanf("%lf", &bet);
         if (iflag)
                 fprintf(stderr, "Enter the pot size after SB bets: ");
-        fscanf(stdin, "%lf\n", &pot);
+        scanf("%lf", &pot);
         if (iflag)
                 fprintf(stderr, "Enter CO's raise size: ");
-        fscanf(stdin, "%lf\n", &raise);
+        scanf("%lf", &raise);
         if (iflag)
                 fprintf(stderr, "Enter the board: ");
         pokerstove::CardSet board(ReadLine());
