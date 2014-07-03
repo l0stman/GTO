@@ -371,8 +371,7 @@ main(int argc, char *argv[])
         GTO::ParentNode root("root", GTO::Node::HERO, hsize, root_children);
         Dealer dealer(info.hero_hands, info.vill_hands);
         printf("Stack\t: %.2f\nPot\t: %.2f\nBet\t: %.2f\nRaise\t: %.2f\n\
-Board\t: %s\n\n", info.stack, info.pot, info.bet, info.raise,
-               board.str().c_str());
+Board\t: %s\n\n", stack, pot, bet, raise, board.str().c_str());
         GTO::Train(num_iter,
                    info.hero_hands,
                    info.vill_hands,
