@@ -262,20 +262,28 @@ size_t num_iter = 200000000;
 bool fflag = false;
 bool iflag = true;
 
-// Return a string read from "stdin" and drop the newline.
+// Return a string on the next non-empty line read from "stdin" and
+// drop the newline.
 char *
 ReadLine()
 {
         static char buf[BUFSIZ];
-        if (fgets(buf, sizeof(buf), stdin) == NULL) {
-                if (feof(stdin))
-                        exit(1);
-                else
-                        err::sys("Read");
+        for (;;) {
+                if (fgets(buf, sizeof(buf), stdin) == NULL) {
+                        if (feof(stdin))
+                                exit(1);
+                        else
+                                err::sys("Read");
+                }
+                size_t len = strlen(buf)-1;
+                if (len == 0)
+                        continue; // empty line
+                if (buf[len] == '\n') {
+                        buf[len] = '\0';
+                        break;
+                }
+
         }
-        size_t len = strlen(buf)-1;
-        if (buf[len] == '\n')
-                buf[len] = '\0';
         return buf;
 }
 
