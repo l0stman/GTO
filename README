@@ -1,0 +1,58 @@
+GTO
+===
+
+The code under this directory implements a set of tools for computing
+GTO strategies for two players playing heads-up no limit hold'em.
+
+It uses the [peval](https://github.com/andrewprock/pokerstove) library
+from pokerstove.  Follow the previous link to see how to build the
+library.  Once it's done, modify the `PREF' variable in `Makefile' to
+the location of the local source of pokerstove.  And just type:
+$ make depend && make
+
+General source file guide:
+
+err.h
+        Implementation of some functions for signaling errors.
+
+cfr.h
+        Interface to a node in a game tree that also implements the
+        counterfactual regret minimization algorithm to compute GTO
+        strategies. It doesn't support chance node.
+
+cfr-inl.h
+        Implementation of some template functions that print the
+        strategies used by the players under a given node.
+
+range.h
+        Implementation of a range of hands that a player can hold
+        post-flop.
+
+equi_dist.h
+        Implementation of an equity distribution between two players
+        post-flop.
+
+preflop_range.h
+        Implementation of a range of hands that a player can hold
+        pre-flop.
+
+preflop_equi_dist.h
+        Implementation of an equity distribution between two players
+        pre-flop.
+
+3bet.cc
+        Compute the strategies for a 3-bet shove game on the flop in
+        an unraised pot.
+
+5bet.cc
+        Compute the strategies of a 5-bet shove game that takes place
+        in pre-flop.
+
+proto/
+        Directory containing a prototype implementation of 5bet.cc in
+        Common Lisp.  If quicklisp is installed just create a symbolic
+        link to `proto' under `~/quicklisp/local-projects' and type
+        from the REPL:
+        CL-USER> (asdf/operate:load-system :gto)
+        T
+        CL-USER> (gto:train)
