@@ -1,14 +1,11 @@
-GTO
-===
-
 The code under this directory implements a set of tools for computing
 GTO strategies for two players playing heads-up no limit hold'em.
 
-It uses the [peval](https://github.com/andrewprock/pokerstove) library
-from pokerstove.  Follow the previous link to see how to build the
-library.  Once it's done, modify the `PREF' variable in `Makefile' to
-the location of the local source of pokerstove.  And just type:
-$ make depend && make
+It uses the peval library from pokerstove (see
+https://github.com/andrewprock/pokerstove).  Follow the previous link
+to see how to build the library.  Once it's done, modify the `PREF'
+variable in `Makefile' to the location of the local source of
+pokerstove.  And just type: $ make depend && make
 
 General source file guide:
 
@@ -19,8 +16,8 @@ cfr.h
         Interface to a node in a game tree that also implements the
         counterfactual regret minimization algorithm to compute GTO
         strategies. It doesn't support chance node.  See page 12 of
-        the following
-        [paper](http://modelai.gettysburg.edu/2013/cfr/cfr.pdf).
+        the following paper:
+        http://modelai.gettysburg.edu/2013/cfr/cfr.pdf.
 
 cfr-inl.h
         Implementation of some template functions that print the
