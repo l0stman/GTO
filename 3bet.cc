@@ -15,6 +15,7 @@
 #include <unistd.h>
 
 #include <cstdlib>
+#include <cstring>
 #include <random>
 #include <vector>
 
