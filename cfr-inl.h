@@ -127,8 +127,11 @@ Train(size_t num_iter,
                 dealer.Deal(hero_id, vill_id);
                 hutil += node.CFR(Node::HERO, hero_id, vill_id);
                 if (i % 1000000 == 0)
-                        fprintf(stderr, "%05.2f%% Villain: %.8f, Hero: %.8f\n",
-                                static_cast<double>(i)/num_iter*100, vutil/i,
+                        fprintf(stderr, "%05.2f%% %s: %.8f, %s: %.8f\n",
+                                static_cast<double>(i)/num_iter*100,
+                                vill_name.c_str(),
+                                vutil/i,
+                                hero_name.c_str(),
                                 hutil/i);
         }
         hutil /= num_iter;
