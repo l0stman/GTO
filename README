@@ -18,7 +18,9 @@ err.h
 cfr.h
         Interface to a node in a game tree that also implements the
         counterfactual regret minimization algorithm to compute GTO
-        strategies. It doesn't support chance node.
+        strategies. It doesn't support chance node.  See page 12 of
+        the following
+        [paper](http://modelai.gettysburg.edu/2013/cfr/cfr.pdf).
 
 cfr-inl.h
         Implementation of some template functions that print the
