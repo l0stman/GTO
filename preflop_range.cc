@@ -19,7 +19,7 @@ PreflopHand::Init(const string& s)
         if (s.size() < 2 || s.size() > 3 || !IsRank(s[0]) || !IsRank(s[1]) ||
             (s.size() == 2 && s[0] != s[1]) ||
             (s.size() == 3 && s[2] != 's' && s[2] != 'o'))
-                err::quit("Unknown preflop hand: %s.", s.c_str());
+                err::quit("Unknown pre-flop hand: %s.", s.c_str());
         return s;
 }
 

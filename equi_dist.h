@@ -8,7 +8,7 @@
 
 namespace GTO {
 
-// Represents the equity distribution postflop.
+// Represents the equity distribution post-flop.
 class EquiDist : public EquiDistInterface<Hand> {
 public:
         explicit EquiDist(const Range& hero,

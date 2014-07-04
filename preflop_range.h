@@ -9,7 +9,7 @@
 
 namespace GTO {
 
-// Represents a pocket hand in preflop.  Suit doesn't matter so the
+// Represents a pocket hand in pre-flop.  Suit doesn't matter so the
 // number of hand combination is reduced from 1329 to 169.  We
 // distinguish only between pocket pairs, offsuit hand and suited
 // hand.

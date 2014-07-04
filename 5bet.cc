@@ -1,5 +1,5 @@
 // This is the implementation of 5-bet shove game that takes place in
-// preflop.  The UTG player open raise.  We suppose that it's folded
+// pre-flop.  The UTG player open raise.  We suppose that it's folded
 // to the BTN that could fold, flat calls or 3-bet.  We assume that
 // the blinds always get out of the way.  If he flat calls, he's going
 // to call another bet equal to 2/3 of the pot on the flop.  If he

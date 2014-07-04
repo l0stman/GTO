@@ -8,7 +8,7 @@
 
 namespace GTO {
 
-// Represents the equity distribution preflop.
+// Represents the equity distribution pre-flop.
 class PreflopEquiDist : public EquiDistInterface<PreflopHand> {
 public:
         PreflopEquiDist();
@@ -36,7 +36,7 @@ private:
         std::unordered_map<Pair<PreflopHand>, double> equity_;
 };
 
-// Represents the number of match-ups suit combos between two preflop
+// Represents the number of match-ups suit combos between two pre-flop
 // hands.
 class SuitCombos {
 public:
@@ -45,7 +45,7 @@ public:
 
         // Return the number of possible match-ups between a hand
         // represented as "hero" and all the hands represented as
-        // "villain" in preflop if we take into account their suits.
+        // "villain" in pre-flop if we take into account their suits.
         unsigned short
         NumCombos(const PreflopHand& hero, const PreflopHand& villain) const
         {
