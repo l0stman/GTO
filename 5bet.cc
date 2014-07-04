@@ -1,13 +1,14 @@
 // This is the implementation of a 5-bet shove game that takes place
 // in pre-flop.  The UTG player open-raises.  We suppose that it's
-// folded to the BTN that could fold, flat calls or 3-bet.  We assume
+// folded to the BTN that could fold, flat call or 3-bet.  We assume
 // that the blinds always get out of the way.  If he flat calls, he's
 // going to call another bet equal to 2/3 of the pot on the flop.  If
 // he 3-bets, the UTG player could fold or 4-bet.  The button could
 // then decide to fold or move all-in.  And UTG could either fold or
 // call the shove.  UTG's opening range and the various bet size
 // should be supplied and a GTO strategy is computed for each player.
-// Usage $ 5bet -h $ 5bet -f -N <5bet_example.txt
+// Usage:
+// $ 5bet -h $ 5bet -f -N <5bet_example.txt
 
 #include <libgen.h>
 #include <limits.h>
