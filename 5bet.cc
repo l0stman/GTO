@@ -17,13 +17,13 @@
 
 #include <cstdio>
 #include <cstdlib>
-#include <cstring>
 
 #include <random>
 
 #include "cfr-inl.h"
 #include "dealer_interface.h"
 #include "err.h"
+#include "input.h"
 #include "preflop_equi_dist.h"
 
 namespace {
@@ -325,35 +325,12 @@ Usage()
 for parameters\n");
         fprintf(stderr, "  -n niter\t-- number of iterations for the simulation\
 \n");
-        exit(1);
+        exit(EXIT_FAILURE);
 }
 
 size_t num_iter = 100000000;
 bool fflag = false;
 bool iflag = true;
-
-char *
-ReadLine()
-{
-        static char buf[BUFSIZ];
-        for (;;) {
-                if (fgets(buf, sizeof(buf), stdin) == NULL) {
-                        if (feof(stdin))
-                                exit(1);
-                        else
-                                err::sys("Read");
-                }
-                size_t len = strlen(buf)-1;
-                if (len == 0)
-                        continue; // empty line
-                if (buf[len] == '\n') {
-                        buf[len] = '\0';
-                        break;
-                }
-
-        }
-        return buf;
-}
 
 } // namespace
 
@@ -384,19 +361,19 @@ main(int argc, char *argv[])
         }
         if (iflag)
                 fprintf(stderr, "Enter the starting stack size: ");
-        fscanf(stdin, "%lf", &stack);
+        input::ScanfOrDie("%lf", &stack);
         if (iflag)
                 fprintf(stderr, "Enter the initial raise size: ");
-        fscanf(stdin, "%lf", &raise);
+        input::ScanfOrDie("%lf", &raise);
         if (iflag)
                 fprintf(stderr, "Enter the 3-bet size: ");
-        fscanf(stdin, "%lf", &three_bet);
+        input::ScanfOrDie("%lf", &three_bet);
         if (iflag)
                 fprintf(stderr, "Enter the 4-bet size: ");
-        fscanf(stdin, "%lf", &four_bet);
+        input::ScanfOrDie("%lf", &four_bet);
         if (iflag)
                 fprintf(stderr, "Enter UTG's opening range: ");
-        GTO::PreflopRange vill(ReadLine());
+        GTO::PreflopRange vill(input::ReadLineOrDie());
         GTO::PreflopRange hero;
         hero.Fill();
         GameInfo info(stack, 1.5, raise, three_bet, four_bet, vill, hero);

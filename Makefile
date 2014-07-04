@@ -8,10 +8,20 @@ LIBDIRS		= -L /usr/local/lib -L $(PREF)/build/lib/pokerstove/peval
 STATIC_LIBS	= -lpeval
 DYNAM_LIBS	= $(PERFTOOLS_LIBS)
 LDFLAGS		= -Wl,-Bstatic $(STATIC_LIBS) -Wl,-Bdynamic $(DYNAM_LIBS)
-
 INCLUDES	= -I /usr/local/include -I $(PREF)/lib
-3BET_OBJS	= 3bet.o range.o equi_dist.o cfr.o err.o
-5BET_OBJS	= 5bet.o preflop_range.o preflop_equi_dist.o cfr.o err.o
+3BET_OBJS	= \
+	3bet.o range.o \
+	equi_dist.o \
+	cfr.o \
+	err.o \
+	input.o
+5BET_OBJS	= \
+	5bet.o \
+	preflop_range.o \
+	preflop_equi_dist.o \
+	cfr.o \
+	err.o \
+	input.o
 PROGNAMES	= 3bet 5bet
 
 all : $(PROGNAMES)

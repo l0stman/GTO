@@ -15,15 +15,15 @@
 #include <unistd.h>
 
 #include <cstdlib>
-#include <cstring>
 #include <random>
 #include <vector>
 
 #include "cfr.h"
 #include "cfr-inl.h"
 #include "dealer_interface.h"
-#include "err.h"
 #include "equi_dist.h"
+#include "err.h"
+#include "input.h"
 #include "range.h"
 
 namespace {
@@ -255,37 +255,12 @@ Usage()
  for parameters\n");
         fprintf(stderr, "  -n niter\t-- number of iterations for the simulation\
 \n");
-        exit(1);
+        exit(EXIT_FAILURE);
 }
 
 size_t num_iter = 200000000;
 bool fflag = false;
 bool iflag = true;
-
-// Return a string on the next non-empty line read from "stdin" and
-// drop the newline.
-char *
-ReadLine()
-{
-        static char buf[BUFSIZ];
-        for (;;) {
-                if (fgets(buf, sizeof(buf), stdin) == NULL) {
-                        if (feof(stdin))
-                                exit(1);
-                        else
-                                err::sys("Read");
-                }
-                size_t len = strlen(buf)-1;
-                if (len == 0)
-                        continue; // empty line
-                if (buf[len] == '\n') {
-                        buf[len] = '\0';
-                        break;
-                }
-
-        }
-        return buf;
-}
 
 } // namespace
 
@@ -316,25 +291,25 @@ main(int argc, char *argv[])
         }
         if (iflag)
                 fprintf(stderr, "Enter the starting stack size: ");
-        scanf("%lf", &stack);
+        input::ScanfOrDie("%lf", &stack);
         if (iflag)
                 fprintf(stderr, "Enter SB's bet size: ");
-        scanf("%lf", &bet);
+        input::ScanfOrDie("%lf", &bet);
         if (iflag)
                 fprintf(stderr, "Enter the pot size after SB bets: ");
-        scanf("%lf", &pot);
+        input::ScanfOrDie("%lf", &pot);
         if (iflag)
                 fprintf(stderr, "Enter CO's raise size: ");
-        scanf("%lf", &raise);
+        input::ScanfOrDie("%lf", &raise);
         if (iflag)
                 fprintf(stderr, "Enter the board: ");
-        pokerstove::CardSet board(ReadLine());
+        pokerstove::CardSet board(input::ReadLineOrDie());
         if (iflag)
                 fprintf(stderr, "Enter the SB's range: ");
-        GTO::Range vill(ReadLine());
+        GTO::Range vill(input::ReadLineOrDie());
         if (iflag)
                 fprintf(stderr, "Enter the CO's range: ");
-        GTO::Range hero(ReadLine());
+        GTO::Range hero(input::ReadLineOrDie());
         GameInfo info(stack, pot, bet, raise, board, vill, hero);
         size_t vsize = info.vill_hands.size();
         size_t hsize = info.hero_hands.size();
