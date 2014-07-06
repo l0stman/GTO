@@ -8,7 +8,8 @@
 // call the shove.  UTG's opening range and the various bet size
 // should be supplied and a GTO strategy is computed for each player.
 // Usage:
-// $ 5bet -h $ 5bet -f -N <5bet_example.txt
+// $ 5bet -h
+// $ 5bet -f -N <5bet_example.txt
 
 #include <libgen.h>
 #include <limits.h>
