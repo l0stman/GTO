@@ -8,7 +8,7 @@ namespace GTO {
 using std::size_t;
 using std::vector;
 
-// Represents a two-dimensional array of numbers.
+// A two-dimensional array of numbers.
 template<class Number>
 class Array {
 public:
@@ -18,7 +18,7 @@ public:
 
         explicit Array(size_t nrows,
                        size_t ncols,
-                       Number init=0.0)
+                       Number init=0)
                 : vect_(vector<Number>(nrows*ncols, init)),
                   nrows_(nrows),
                   ncols_(ncols)
