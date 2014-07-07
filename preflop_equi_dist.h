@@ -8,7 +8,7 @@
 
 namespace GTO {
 
-// Represents the equity distribution pre-flop.
+// Implementation of pre-flop equity distribution.
 class PreflopEquiDist : public EquiDistInterface<PreflopHand> {
 public:
         PreflopEquiDist();

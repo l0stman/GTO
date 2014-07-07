@@ -13,6 +13,7 @@ namespace GTO {
 using std::string;
 using std::vector;
 
+// Represents a node in a game tree.
 class Node {
 public:
         // Represents the players in the game.
