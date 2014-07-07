@@ -10,7 +10,7 @@
 
 namespace GTO {
 
-// Print all the strategies of each node under "node" for
+// Print all the strategies used at each node under "node" for
 // "player". "states" is a vector containing all the possible states
 // for the given player.  Thus, the state id varies between 0 and
 // states.size()-1.
