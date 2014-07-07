@@ -27,7 +27,7 @@ public:
         static const char *player_names[];
 
         const string& name() const { return name_; }
-        const Player& active_player() const { return active_player_; }
+        Player active_player() const { return active_player_; }
         const vector<Node *>& children() const { return children_; }
 
         // Return the utility of "player" at a leaf node. "pid" is the
