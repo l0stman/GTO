@@ -1,4 +1,4 @@
-// This is the implementation of a 5-bet shove game that takes place
+// This is an implementation of a 5-bet shove game that takes place
 // in pre-flop.  The UTG player open-raises.  We suppose that it's
 // folded to the BTN that could fold, flat call or 3-bet.  We assume
 // that the blinds always get out of the way.  If he flat calls, he's
@@ -329,10 +329,6 @@ for parameters\n");
         exit(EXIT_FAILURE);
 }
 
-size_t num_iter = 100000000;
-bool fflag = false;
-bool iflag = true;
-
 } // namespace
 
 int
@@ -340,6 +336,9 @@ main(int argc, char *argv[])
 {
         int ch;
         double stack, raise, three_bet, four_bet;
+        size_t num_iter = 100000000;
+        bool fflag = false;     // with flat calling range for CO?
+        bool iflag = true;      // interactive mode?
 
         err::progname = strdup(basename(argv[0]));
         while ((ch = getopt(argc, argv, "hfNn:")) != -1) {
