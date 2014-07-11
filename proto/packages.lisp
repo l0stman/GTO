@@ -17,7 +17,8 @@
            #:new
            #:fill
            #:size
-           #:handp))
+           #:handp
+           #:hand))
 
 (defpackage #:equity
   (:use :cl)
