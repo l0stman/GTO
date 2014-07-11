@@ -187,7 +187,7 @@
         (pr "BTN" hhands hprobs hnames hutil)))))
 
 (defun range-to-array (range)
-  (let ((hands (make-array (range:size range) :element-type 'simple-string))
+  (let ((hands (make-array (range:size range) :element-type 'range:hand))
         (i 0))
     (range:iterate (hand range)
       (setf (aref hands i) hand
