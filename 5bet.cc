@@ -323,7 +323,7 @@ Usage()
         fprintf(stderr, "  -f\t\t-- allow the BTN to have a flat calling range\
 \n");
         fprintf(stderr, "  -N\t\t-- non-interactive mode, don't prompt the user\
-for parameters\n");
+ for parameters\n");
         fprintf(stderr, "  -n niter\t-- number of iterations for the simulation\
 \n");
         exit(EXIT_FAILURE);
