@@ -35,13 +35,11 @@ ReadLineOrDie(void)
                                 err::sys("ReadLineOrDie");
                 }
                 size_t len = strlen(buf)-1;
-                if (len == 0)
-                        continue; // empty line
-                if (buf[len] == '\n') {
-                        buf[len] = '\0';
+                if (len > 0) {  // non-empty-line
+                        if (buf[len] == '\n') // drop newline
+                                buf[len] = '\0';
                         break;
                 }
-
         }
         return buf;
 }

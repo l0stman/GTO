@@ -51,4 +51,4 @@ private:
 };
 } // namespace GTO
 
-#endif                          // !GTO_ARRAY_H_
+#endif  // !GTO_ARRAY_H_
