@@ -36,7 +36,7 @@ public:
 private:
         std::string Init(const std::string& s);
         const std::string hand_;
-        const short suit_combos_;
+        const unsigned short suit_combos_;
 };
 
 } // namespace GTO
