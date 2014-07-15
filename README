@@ -5,7 +5,8 @@ It uses the peval library from pokerstove (see
 https://github.com/andrewprock/pokerstove).  Follow the previous link
 to see how to build the library.  Once it's done, modify the `PREF'
 variable in `Makefile' to the location of the local source of
-pokerstove.  And just type: $ make depend && make
+pokerstove.  And just type:
+$ make depend && make
 
 General source file guide:
 
