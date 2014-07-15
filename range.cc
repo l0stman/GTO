@@ -347,16 +347,15 @@ string
 Range::ToString() const
 {
         string s;
-        std::set<Hand> r(range_.begin(), range_.end());
-        auto it = r.begin();
 
-        if (it != r.end())
-                for (;;) {
-                        s += it->str();
-                        if (++it == r.end())
-                                break;
-                        s += ",";
-                }
+        if (range_.size() > 0) {
+                std::set<Hand> r(range_.begin(), range_.end());
+                auto it = r.begin();
+                s += it->ToString();
+                while (++it != r.end())
+                        s += "," + it->ToString();
+        }
         return s;
 }
+
 } // namespace GTO
