@@ -63,7 +63,7 @@ public:
         // For each player, get the names of the nodes under "node"
         // where the player is last active before the game terminates.
         // Those corresponding to HERO are appended to "hero_names"
-        // and those corresponding to villain to "vill_hands".
+        // and those corresponding to villain to "vill_names".
         static void
         GetFinalActionNames(const Node& node,
                             vector<string>& hero_names,
