@@ -156,7 +156,8 @@ of nodes.", name.c_str());
         ~ParentNode() {}
 
         // A non-terminal node doesn't need this method.
-        double Utility(Player player, size_t pid, size_t oid) const
+        virtual double
+        Utility(Player player, size_t pid, size_t oid) const
         {
                 assert(false);
                 return 0;
