@@ -8,8 +8,8 @@ extern void ScanfOrDie(const char *fmt, ...);
 
 // Return a string on the next non-empty line read from "stdin" and
 // drop the newline at the end of a line. Exit on error.  The function
-// returns a pointer to an internal storage space that will be
-// overwritten by subsequent calls.
+// returns a pointer to a fixed-size internal storage space that will
+// be overwritten by subsequent calls.
 extern char *ReadLineOrDie(void);
 
 } // namespace input
