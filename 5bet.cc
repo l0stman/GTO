@@ -248,7 +248,7 @@ std::uniform_real_distribution<double> prob_dist(0, 1.0);
 class Dealer : public GTO::DealerInterface {
 public:
         explicit Dealer(const GameInfo& info)
-                : vill_hands_(info.vill_hands),
+                : hero_hands_(info.hero_hands),
                   suit_combos_(info.suit_combos),
                   hero_weights_(InitWeights(info.hero_hands)),
                   vill_weights_(InitWeights(info.vill_hands))
@@ -262,11 +262,11 @@ public:
                         hero_id = Sample(hero_weights_);
                         vill_id = Sample(vill_weights_);
                         unsigned short m = suit_combos_.get(vill_id, hero_id);
-                        unsigned short s = vill_hands_[vill_id].suit_combos();
+                        unsigned short s = hero_hands_[hero_id].suit_combos();
                         if (m == s)
                                 return; // there is no possible conflict
                         // We choose a random hand from those
-                        // represented by vill_hands_[vill_id].  If
+                        // represented by hero_hands_[hero_id].  If
                         // it's one of the possible match-ups, then
                         // we're good.
                         std::uniform_int_distribution<unsigned short> d(0, s-1);
@@ -309,7 +309,7 @@ private:
                 return min;
         }
 
-        const vector<GTO::PreflopHand>& vill_hands_;
+        const vector<GTO::PreflopHand>& hero_hands_;
         const GTO::Array<unsigned short>& suit_combos_;
         const vector<double> hero_weights_;
         const vector<double> vill_weights_;
