@@ -26,6 +26,7 @@
 #include "err.h"
 #include "input.h"
 #include "preflop_equi_dist.h"
+#include "range.h"
 
 namespace {
 using std::vector;
@@ -247,73 +248,71 @@ std::uniform_real_distribution<double> prob_dist(0, 1.0);
 
 class Dealer : public GTO::DealerInterface {
 public:
+        typedef std::uniform_int_distribution<size_t> UniDist;
+
         explicit Dealer(const GameInfo& info)
-                : vill_hands_(info.vill_hands),
-                  suit_combos_(info.suit_combos),
-                  hero_weights_(InitWeights(info.hero_hands)),
-                  vill_weights_(InitWeights(info.vill_hands))
+                : hero_hands_(InitHands(info.hero_hands)),
+                  vill_hands_(InitHands(info.vill_hands)),
+                  hero_ids_(InitIds(info.hero_hands)),
+                  vill_ids_(InitIds(info.vill_hands)),
+                  hero_dist_(UniDist(0, hero_hands_.size()-1)),
+                  vill_dist_(UniDist(0, vill_hands_.size()-1))
         {}
         ~Dealer() {}
 
         virtual void
         Deal(size_t& hero_id, size_t& vill_id)
         {
+                size_t h = 0;
+                size_t v = 0;
+
                 for (;;) {
-                        hero_id = Sample(hero_weights_);
-                        vill_id = Sample(vill_weights_);
-                        unsigned short m = suit_combos_.get(vill_id, hero_id);
-                        unsigned short s = vill_hands_[vill_id].suit_combos();
-                        if (m == s)
-                                return; // there is no possible conflict
-                        // We choose a random hand from those
-                        // represented by vill_hands_[vill_id].  If
-                        // it's one of the possible match-ups, then
-                        // we're good.
-                        std::uniform_int_distribution<unsigned short> d(0, s-1);
-                        if (d(generator) < m)
+                        h = hero_dist_(generator);
+                        v = vill_dist_(generator);
+                        if (hero_hands_[h].disjoint(vill_hands_[v])) {
+                                hero_id = hero_ids_[h];
+                                vill_id = vill_ids_[v];
                                 return;
+                        }
                 }
         }
+
 private:
-        vector<double>
-        InitWeights(const vector<GTO::PreflopHand>& hands)
-        {
-                vector<double> W(hands.size(), 0.0);
-                double total = 0;
+        vector<GTO::Hand> InitHands(const vector<GTO::PreflopHand>& hands);
+        vector<size_t> InitIds(const vector<GTO::PreflopHand>& hands);
 
-                for (size_t i = 0; i < W.size(); i++) {
-                        total += hands[i].suit_combos();
-                        W[i] = total;
-                }
-                if (total > 0)
-                        for (size_t i = 0; i < W.size(); i++)
-                                W[i] /= total;
-                return W;
-        }
-
-        size_t
-        Sample(const vector<double>& weights) const
-        {
-                double r = prob_dist(generator);
-                int min = 0;
-                int max = weights.size()-1;
-                while (min <= max) {
-                        size_t mid = min + ((max-min) >> 1);
-                        if (r < weights[mid])
-                                max = mid-1;
-                        else if (r < weights[mid+1])
-                                return mid+1;
-                        else
-                                min = mid+1;
-                }
-                return min;
-        }
-
-        const vector<GTO::PreflopHand>& vill_hands_;
-        const GTO::Array<unsigned short>& suit_combos_;
-        const vector<double> hero_weights_;
-        const vector<double> vill_weights_;
+        const vector<GTO::Hand> hero_hands_;
+        const vector<GTO::Hand> vill_hands_;
+        const vector<size_t> hero_ids_;
+        const vector<size_t> vill_ids_;
+        UniDist hero_dist_;
+        UniDist vill_dist_;
 };
+
+vector<GTO::Hand>
+Dealer::InitHands(const vector<GTO::PreflopHand>& preflop_hands)
+{
+        vector<GTO::Hand> hands;
+
+        for (auto preflop_hand : preflop_hands)
+                for (auto hand : GTO::Range(preflop_hand.ToString()))
+                        hands.push_back(hand);
+        return hands;
+}
+
+vector<size_t>
+Dealer::InitIds(const vector<GTO::PreflopHand>& preflop_hands)
+{
+        vector<size_t> ids;
+        size_t id = 0;
+
+        for (auto preflop_hand : preflop_hands) {
+                for (unsigned short i = 0; i < preflop_hand.suit_combos(); i++)
+                        ids.push_back(id);
+                id++;
+        }
+        return ids;
+}
 
 void
 Usage()
