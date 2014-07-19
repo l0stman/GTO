@@ -22,7 +22,8 @@ INCLUDES	= -I /usr/local/include -I $(PREF)/lib
 	preflop_equi_dist.o \
 	cfr.o \
 	err.o \
-	input.o
+	input.o \
+	range.o
 PROGNAMES	= 3bet 5bet
 
 all : $(PROGNAMES)
