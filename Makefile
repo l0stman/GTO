@@ -10,7 +10,8 @@ DYNAM_LIBS	= $(PERFTOOLS_LIBS)
 LDFLAGS		= -Wl,-Bstatic $(STATIC_LIBS) -Wl,-Bdynamic $(DYNAM_LIBS)
 INCLUDES	= -I /usr/local/include -I $(PREF)/lib
 3BET_OBJS	= \
-	3bet.o range.o \
+	3bet.o \
+	range.o \
 	equi_dist.o \
 	cfr.o \
 	err.o \

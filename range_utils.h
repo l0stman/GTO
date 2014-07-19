@@ -12,7 +12,7 @@ using std::string;
 const string kRanks = "23456789TJQKA";
 const string kSuits = "cdhs";
 
-void
+inline void
 FmtError(const string& s)
 {
         err::quit("Unknown range format: %s.", s.c_str());
