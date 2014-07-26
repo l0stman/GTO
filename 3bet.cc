@@ -267,7 +267,7 @@ main(int argc, char *argv[])
         int ch;
         double stack, pot, bet, raise;
         size_t num_iter = 200000000;
-        bool fflag = false;     // with flat calling range for BTN?
+        bool fflag = false;     // with flat calling range for CO?
         bool iflag = true;      // interactive mode?
 
         err::progname = strdup(basename(argv[0]));

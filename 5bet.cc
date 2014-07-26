@@ -336,7 +336,7 @@ main(int argc, char *argv[])
         int ch;
         double stack, raise, three_bet, four_bet;
         size_t num_iter = 100000000;
-        bool fflag = false;     // with flat calling range for CO?
+        bool fflag = false;     // with flat calling range for BTN?
         bool iflag = true;      // interactive mode?
 
         err::progname = strdup(basename(argv[0]));
