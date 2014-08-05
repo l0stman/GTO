@@ -39,11 +39,9 @@ GetProbsAux(const GTO::Node& node,
 
 namespace GTO {
 
-const char *Node::player_names[] = {
-        "hero",
-        "villain",
-        "nobody"
-};
+#define X(a, b) b,
+const char *Node::player_names[] = { PLAYERS };
+#undef X
 
 Array<double>
 Node::AverageStrategy() const

@@ -13,16 +13,18 @@ namespace GTO {
 using std::string;
 using std::vector;
 
+#define PLAYERS                                 \
+        X(HERO, "hero")                         \
+        X(VILLAIN, "villain")                   \
+        X(NOBODY, "nobody")
+
 // Represents a node in a game tree.
 class Node {
 public:
         // Represents the players in the game.
-        // Note: Update the initialization of "player_names" if modified.
-        enum Player {
-                HERO,
-                VILLAIN,
-                NOBODY
-        };
+#define X(a, b) a,
+        enum Player { PLAYERS };
+#undef X
 
         // Name of the players in the game.
         static const char *player_names[];
