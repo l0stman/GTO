@@ -1,12 +1,14 @@
-// This is an implementation of a 5-bet shove game that takes place
-// in pre-flop.  The UTG player open-raises.  We suppose that it's
-// folded to the BTN that could fold, flat call or 3-bet.  We assume
-// that the blinds always get out of the way.  If he flat calls, he's
-// going to call another bet equal to 2/3 of the pot on the flop.  If
-// he 3-bets, the UTG player could fold or 4-bet.  The button could
-// then decide to fold or move all-in.  And UTG could either fold or
-// call the shove.  UTG's opening range and the various bet size
-// should be supplied and a GTO strategy is computed for each player.
+// This is an implementation of a 5-bet shove game that takes place in
+// pre-flop.  The UTG player open-raises.  We suppose that it's folded
+// to the BTN that could fold, flat call or 3-bet.  We assume that the
+// blinds always get out of the way.  If he flat calls, he's going to
+// call another bet equal to 2/3 of the pot on the flop.  If he
+// 3-bets, the UTG player could flat-call, fold or 4-bet.  If UTG
+// flat calls, then BTN will bet 2/3 of the pot on the flop too.
+// Otherwise, the button could then decide to fold or move all-in.
+// And UTG could either fold or call the shove.  UTG's opening range
+// and the various bet size should be supplied and a GTO strategy is
+// computed for each player.
 // Usage:
 // $ 5bet -h
 // $ 5bet -f -N <5bet_example.txt
@@ -178,6 +180,41 @@ private:
         const GameInfo& info_;
 };
 
+class VillRaiseCall : public GTO::Leaf {
+public:
+        explicit VillRaiseCall(const string& name, const GameInfo& info)
+                : GTO::Leaf(name), info_(info)
+        {}
+
+        virtual double
+        Utility(Player player, size_t pid, size_t oid) const
+        {
+                double flop_pot = info_.blinds + 2*info_.three_bet;
+                double flop_bet = 2.0/3*flop_pot;
+                double EQ = 0;
+
+                switch (player) {
+                case GTO::Node::HERO:
+                        EQ = info_.equity.get(oid, pid);
+                        assert(EQ >= 0);
+                        EQ = 1-EQ;
+                        break;
+                case GTO::Node::VILLAIN:
+                        EQ = info_.equity.get(pid, oid);
+                        assert(EQ >= 0);
+                        break;
+                default:
+                        GTO::UtilError(player, name());
+                        break;
+                }
+
+                return info_.stack-info_.three_bet-flop_bet +
+                        EQ*(flop_pot + 2*flop_bet);
+        }
+private:
+        const GameInfo& info_;
+};
+
 class HeroFlatCall : public GTO::Leaf {
 public:
         explicit HeroFlatCall(const string& name, const GameInfo& info)
@@ -319,8 +356,10 @@ Usage()
 {
         fprintf(stderr, "usage: %s [-h] [-f] [-N] [-n iter]\n", err::progname);
         fprintf(stderr, "  -h\t\t-- print this help message\n");
-        fprintf(stderr, "  -f\t\t-- allow the BTN to have a flat calling range\
-\n");
+        fprintf(stderr, "  -f\t\t-- allow BTN to have a flat calling range \
+facing a raise\n");
+        fprintf(stderr, "  -F\t\t-- allow UTG to have a flat calling range \
+facing a 3-bet\n");
         fprintf(stderr, "  -N\t\t-- non-interactive mode, don't prompt the user\
  for parameters\n");
         fprintf(stderr, "  -n niter\t-- number of iterations for the simulation\
@@ -337,10 +376,11 @@ main(int argc, char *argv[])
         double stack, raise, three_bet, four_bet;
         size_t num_iter = 100000000;
         bool fflag = false;     // with flat calling range for BTN?
+        bool Fflag = false;     // with flat calling range for UTG?
         bool iflag = true;      // interactive mode?
 
         err::progname = strdup(basename(argv[0]));
-        while ((ch = getopt(argc, argv, "hfNn:")) != -1) {
+        while ((ch = getopt(argc, argv, "hfFNn:")) != -1) {
                 switch (ch) {
                 case 'n':
                         num_iter = strtol(optarg, NULL, 10);
@@ -350,6 +390,9 @@ main(int argc, char *argv[])
                         break;
                 case 'f':
                         fflag = true;
+                        break;
+                case 'F':
+                        Fflag = true;
                         break;
                 case 'h':
                         // fall through
@@ -389,13 +432,24 @@ main(int argc, char *argv[])
                                     vsize,
                                     five_bet_children)
         };
-        vector<GTO::Node *> three_bet_children = {
-                new VillRaiseFold("Open raise bluffing", info),
-                new GTO::ParentNode("4-bet",
-                                    GTO::Node::HERO,
-                                    hsize,
-                                    four_bet_children)
-        };
+        vector<GTO::Node *> three_bet_children;
+        if (Fflag)
+                three_bet_children = {
+                        new VillRaiseFold("Open raise bluffing", info),
+                        new VillRaiseCall("Open raise calling", info),
+                        new GTO::ParentNode("4-bet",
+                                            GTO::Node::HERO,
+                                            hsize,
+                                            four_bet_children)
+                };
+        else
+                three_bet_children = {
+                        new VillRaiseFold("Open raise bluffing", info),
+                        new GTO::ParentNode("4-bet",
+                                            GTO::Node::HERO,
+                                            hsize,
+                                            four_bet_children)
+                };
         vector<GTO::Node *> root_children;
         if (fflag)
                 root_children = {
