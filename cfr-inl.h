@@ -69,23 +69,28 @@ FlatPrint(const Node& root,
 {
         Array<double> probs(states.size(), names.size());
         vector<Record> records;
-        double total = 0.0;
+        double total_states = 0.0;
+
+        for (size_t id = 0; id < states.size(); id++)
+                total_states += states[id].NumCombos();
 
         Node::GetFinalActionProbs(root, player, probs);
         for (size_t n = 0; n < names.size(); n++) {
-                total = 0.0;
+                double total_range = 0.0;
                 records.clear();
                 records.reserve(names.size());
                 for (size_t id = 0; id < states.size(); id++) {
-                        if (probs.get(id, n) >= 0.05) {
+                        total_range += states[id].NumCombos()*probs.get(id,n);
+                        if (probs.get(id, n) >= 0.05)
                                 records.push_back(Record(states[id].ToString(),
                                                          probs.get(id, n)));
-                                total += states[id].NumCombos()*probs.get(id,n);
-                        }
                 }
                 sort(records.begin(), records.end());
-                printf("%s range: %.2f %s%c\n", names[n].c_str(), total,
-                       State::Name().c_str(), total == 1 ? ' ' : 's');
+                printf("%s range: %.2f%% %s%c\n",
+                       names[n].c_str(),
+                       total_range/total_states*100,
+                       State::Name().c_str(),
+                       total_range == 1 ? ' ' : 's');
                 printf("%s\tProb\n", State::Name().c_str());
                 for (auto r : records)
                         printf("%s\t%.4f\n", r.state.c_str(), r.prob);
